@@ -3,3 +3,6 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+@import "../../deps/live_monaco_editor/priv/static/live_monaco_editor.min.css";
+
+
