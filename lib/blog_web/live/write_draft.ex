@@ -32,31 +32,32 @@ defmodule BlogWeb.WriteDraft do
             )
           }
         />
-        <.button class="mt-10 bg-neutral-800 ">Save Draft</.button>
+        <.button id="save-draft-btn" name="save" value="draft" class="mt-10 bg-neutral-800 ">Save Draft</.button>
+        <.button id="publish-draft-btn" name="save" value="publish" class="mt-10 bg-lime-200 hover:bg-lime-300 text-black border-2 border-lime-800">Publish</.button>
         </.form>
         """
     end
 
     def handle_event("code-editor-lost-focus", %{"textBody" => body}, socket) do
-      # body = Md.generate(body)
-      # Admin.save_draft(%{"title":})
-      # Logger.info(body)
       {:noreply, assign(socket, :source, body)}
     end
 
     def handle_event("save-draft", params, socket) do
-
-      # Logger.info(Map.put(draft, "body", draft["live_monaco_editor"]["file"]))
-
-      # Logger.info(draft)
-      # Logger.info(transformed_map)
-      draft = %{
+      contents = %{
         "title" => params["draft"]["title"],
         "body" => params["live_monaco_editor"]["file"]
       }
-      Admin.save_draft(draft)
-      |> Logger.info()
-      {:noreply, socket}
+
+      if params["save"] == "draft" do
+        Admin.save_draft(contents)
+        |> Logger.info()
+        {:noreply, socket}       
+      else
+        Admin.publish_post(contents)
+        |> Logger.info()
+        {:noreply, socket }
+      end
+
     end
 
     # plan the route's layout properly
