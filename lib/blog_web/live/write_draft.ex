@@ -7,7 +7,6 @@ defmodule BlogWeb.WriteDraft do
     alias Blog.Admin.Draft
 
     def mount(_params, _session, socket) do
-      # Logger.info("draft mounted")
       changeset = Admin.Draft.changeset(%Draft{}, %{})
       {:ok, assign(socket, 
                     page_title: "Write Draft",
@@ -42,23 +41,26 @@ defmodule BlogWeb.WriteDraft do
       {:noreply, assign(socket, :source, body)}
     end
 
-    def handle_event("save-draft", params, socket) do
-      contents = %{
-        "title" => params["draft"]["title"],
-        "body" => params["live_monaco_editor"]["file"]
-      }
-
-      if params["save"] == "draft" do
-        Admin.save_draft(contents)
-        |> Logger.info()
-        {:noreply, socket}       
-      else
-        Admin.publish_post(contents)
-        |> Logger.info()
-        {:noreply, socket }
-      end
-
+    def handle_event("save-draft", 
+                                %{"draft" => %{"title" => title}, 
+                                "live_monaco_editor" => %{"file" => body}, 
+                                "save" => save_action} = params,
+                    socket) do
+      contents = %{"title" => title, "body" => body}
+    
+      action_result =
+        case save_action do
+          "draft" ->
+            Admin.save_draft(contents)
+          "publish" ->
+            Admin.publish_post(contents)
+        end
+    
+      Logger.info(action_result)
+      
+      {:noreply, socket}
     end
+    
 
     # plan the route's layout properly
     # sidebar
