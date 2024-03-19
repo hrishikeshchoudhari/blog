@@ -18,7 +18,7 @@ defmodule BlogWeb.WriteDraft do
         ~H"""
         <.form for={@form} phx-submit="save-draft">
         <.input id="title" field={@form[:title]} type="text" value="" placeholder="Enter title here" class="mb-10 pb-10"/>
-        <LiveMonacoEditor.code_editor id="body" class="mt-10"
+        <LiveMonacoEditor.code_editor id="body" class="mt-10" change="set_editor_value" phx-debounce="1000"
           opts={
             Map.merge(
               LiveMonacoEditor.default_opts(),
@@ -41,12 +41,26 @@ defmodule BlogWeb.WriteDraft do
       {:noreply, assign(socket, :source, body)}
     end
 
+    # def handle_event("set_editor_value", %{"textBody" => body}, socket) do
+    #   {:noreply, assign(socket, :source, body)}
+    # end
+    def handle_event("set_editor_value", %{"value" => body}, socket) do
+      {:noreply, assign(socket, :editor_value, body)}
+    end
+    
+
+    def handle_event("validate", %{"_target" => ["live_monaco_editor", "my_file.html"]}, socket) do
+      # ignore change events from the editor field
+      {:noreply, socket}
+    end
+
     def handle_event("save-draft", 
                                 %{"draft" => %{"title" => title}, 
                                 "live_monaco_editor" => %{"file" => body}, 
                                 "save" => save_action} = params,
                     socket) do
-      contents = %{"title" => title, "body" => body}
+      # Logger.info(socket)
+      contents = %{"title" => title, "body" => socket.assigns.editor_value}
     
       action_result =
         case save_action do
