@@ -79,6 +79,10 @@ module.exports = {
           '900': '#82331a',
           '950': '#471708',
         },                        
+      },
+      fontFamily: {
+        snpro: 'SNPro',
+        calistoga: 'Calistoga'
       }
     },
   },

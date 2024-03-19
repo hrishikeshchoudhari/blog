@@ -5,4 +5,28 @@
 /* This file is for your main application CSS */
 @import "../../deps/live_monaco_editor/priv/static/live_monaco_editor.min.css";
 
+@layer base {
+  @font-face {
+    font-family: 'SNPro';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/SNPro-Regular.woff2) format('woff2');
+  }
 
+  @font-face {
+    font-family: 'SNPro';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url(/fonts/SNPro-Medium.woff2) format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Calistoga';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/Calistoga-Regular.ttf) format('truetype');
+  }
+}
