@@ -14,6 +14,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        'white': '#FFFFFF',
+        'black': '#000000',
+        'lava': '#F56E0F',
+        'snow': '#FBFBFB',
         'pine': {
           '50': '#f2f8ed',
           '100': '#e0f0d7',

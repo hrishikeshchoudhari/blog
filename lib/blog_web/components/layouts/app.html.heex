@@ -1,14 +1,17 @@
-<header class="px-4 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-    <div class="flex items-center gap-4">
-      <a href="/">
-        <img src={~p"/images/r-logo.png"} width="50" />
+<header class="fixed top-0 w-full z-10 px-4 sm:px-6 lg:px-8 bg-white/30 backdrop-blur-sm border-b-2 border-slate-100">
+  <div class="flex justify-between py-3">
+    <nav class="flex sm:gap-8 lg:gap-24 md:gap-12 max-w-4xl mx-auto text-neutral-950 font-snpro font-medium text-xl">
+      <a href="/" class="inline-block">
+        <img src="/images/r-logo.png" width="50" alt="R logo">
       </a>
-      <p  class="font-serif font-extrabold tracking-tighter text-4xl text-slate-900">
-        Rishi's Blog
-      </p>
-    </div>
+      <a href="/about" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">About</a>
+      <a href="/writing" class="border-b-8 border-lava rounded opacity-100">Writing</a>
+      <a href="/projects" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">Projects</a>
+      <a href="/readings" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">Readings</a>
+      <a href="/changelog" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">Changelog</a>
+    </nav>
   </div>
+  
 </header>
 <main class="px-4 py-20 sm:px-6 lg:px-8">
   <div class="mx-auto max-w-4xl">
