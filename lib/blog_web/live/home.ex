@@ -71,8 +71,8 @@ defmodule BlogWeb.Home do
         <ul>
         <%= for post <- @posts do %>
           <li class="mt-14 ">
-            <h3 class="text-slate-700 text-4xl font-snpro mb-3 tracking-tighter"><%= post.title %></h3>
-            <div class="text-slate-900 tracking-tight text-xl font-snpro font-medium "><%= raw post.body %></div>
+            <h3 class="text-neutral-850 text-4xl font-snpro mb-3 tracking-tighter"><%= post.title %></h3>
+            <div class="text-neutral-950 tracking-tight text-xl font-snpro font-medium "><%= raw post.body %></div>
           </li>
         <% end %>
         </ul>

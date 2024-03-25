@@ -1,21 +1,54 @@
-<header class="fixed top-0 w-full z-10 px-4 sm:px-6 lg:px-8 bg-white/30 backdrop-blur-sm border-b-2 border-slate-100">
-  <div class="flex justify-between py-3">
-    <nav class="flex sm:gap-8 lg:gap-24 md:gap-12 max-w-4xl mx-auto text-neutral-950 font-snpro font-medium text-xl">
-      <a href="/" class="inline-block">
+<header class="fixed top-0 w-full z-10 sm:px-4 lg:px-8 bg-white/50 backdrop-blur-sm drop-shadow-md">
+  <div class="flex items-center justify-center py-3">
+    <nav class="flex flex-row grow items-center gap-2 lg:gap-16 md:gap-8 text-neutral-950 font-snpro font-medium max-w-4xl">
+      <a href="/" class="inline-block lg:pl-32 md:pl-16 sm:pl-2">
         <img src="/images/r-logo.png" width="50" alt="R logo">
       </a>
-      <a href="/about" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">About</a>
-      <a href="/writing" class="border-b-8 border-lava rounded opacity-100">Writing</a>
-      <a href="/projects" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">Projects</a>
-      <a href="/readings" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">Readings</a>
-      <a href="/changelog" class="opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded">Changelog</a>
+      <a href="/about" class="basis-2/12 text-center opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded ">About</a>
+      <a href="/writing" class="basis-2/12 text-center border-b-8 border-lava rounded opacity-100 ">Writing</a>
+      <a href="/projects" class="basis-2/12 text-center opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded ">Projects</a>
+      <a href="/readings" class="basis-2/12 text-center opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded ">Readings</a>
+      <a href="/changelog" class="basis-2/12 text-center opacity-75 hover:opacity-85 hover:border-b-8 hover:border-lava hover:rounded ">Changelog</a>
     </nav>
   </div>
   
 </header>
-<main class="px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-4xl">
-    <.flash_group flash={@flash} />
-    <%= @inner_content %>
+<div class="flex">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-lava border-r border-orange-600 text-white">
+    <!-- Sidebar content here -->
+    <div class="px-3 py-4 mt-24">
+      <div class="mb-4">Link 1</div>
+      <div class="mb-4">Link 2</div>
+      <div class="mb-4">Link 3</div>
+      <!-- Add more sidebar links or content as needed -->
+    </div>
+  </aside>
+
+  <!-- Main content area -->
+  <main class="flex-1 px-4 py-20 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-4xl">
+      <!-- Your existing main content -->
+      <.flash_group flash={@flash} />
+      <%= @inner_content %>
+    </div>
+  </main>
+</div>
+
+<footer class="bg-black text-gray-400 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div>
+      <h2 class="font-bold text-lg mb-4 text-gray-300">Column 1</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    </div>
+    <div>
+      <h2 class="font-bold text-lg mb-4 text-gray-300">Column 2</h2>
+      <p>Pellentesque habitant morbi tristique senectus et netus.</p>
+    </div>
+    <div>
+      <h2 class="font-bold text-lg mb-4 text-gray-300">Column 3</h2>
+      <p>Fusce nec tellus sed augue semper porta.</p>
+    </div>
   </div>
-</main>
+</footer>
+
