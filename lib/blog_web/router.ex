@@ -23,6 +23,7 @@ defmodule BlogWeb.Router do
     # get "/", PageController, :home
     live "/", Home
     live "/admin/draft", WriteDraft
+    live "/upload", UploadLive
   end
 
   # Other scopes may use custom stacks.
