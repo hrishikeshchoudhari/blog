@@ -38,3 +38,7 @@
     src: url(/fonts/Calistoga-Regular.ttf) format('truetype');
   }
 }
+
+.post-body p {
+  @apply mb-8;
+}
