@@ -5,13 +5,11 @@ defmodule BlogWeb.Home do
 
     def mount(_params, _session, socket) do
       posts = Landing.all_posts()
-      {:ok, assign(socket, posts: posts)}
+      {:ok, assign(socket, posts: posts, active_nav: :writing)}
     end
 
     def render(assigns) do
       ~H"""
-
-
       <div class="posts">
         <ul>
         <%= for post <- @posts do %>
