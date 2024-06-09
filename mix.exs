@@ -54,7 +54,8 @@ defmodule Blog.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:plug_cowboy, "~> 2.5"},
       {:live_monaco_editor, "0.1.8"},
-      {:md, "~> 0.10.2"}
+      {:md, "~> 0.10.2"},
+      {:timex, "~> 3.7.11"}
     ]
   end
 
