@@ -6,6 +6,7 @@ defmodule BlogWeb.UploadLive do
     {:ok,
     socket
     |> assign(:uploaded_files, [])
+    |> assign(active_nav: :upload)
     |> allow_upload(:avatar, accept: ~w(.jpg .jpeg), max_entries: 2)}
   end
 
