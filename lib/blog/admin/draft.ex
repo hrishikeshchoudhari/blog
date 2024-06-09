@@ -5,6 +5,8 @@ defmodule Blog.Admin.Draft do
   schema "drafts" do
     field :title, :string
     field :body, :string
+    field :slug, :string
+    field :publishedDate, :utc_datetime
     # TODO
     # unique slug field
     # change ID to UUID ?
@@ -17,7 +19,7 @@ defmodule Blog.Admin.Draft do
   @doc false
   def changeset(draft, attrs) do
     draft
-    |> cast(attrs, [:title, :body])
-    |> validate_required([:title, :body])
+    |> cast(attrs, [:title, :body, :slug, :publishedDate])
+    |> validate_required([:title, :body, :slug, :publishedDate])
   end
 end

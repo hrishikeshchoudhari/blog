@@ -11,7 +11,8 @@ defmodule BlogWeb.WriteDraft do
       {:ok,
         assign(socket,
           page_title: "Write Draft",
-          form: to_form(changeset)
+          form: to_form(changeset),
+          active_nav: :writing
         )
       }
     end
@@ -20,19 +21,21 @@ defmodule BlogWeb.WriteDraft do
         ~H"""
         <.form for={@form} phx-submit="save-draft">
           <.input id="title" field={@form[:title]} type="text" value="" placeholder="Enter title here" class="mb-10 pb-10"/>
-          <LiveMonacoEditor.code_editor id="body" class="mt-10" change="set_editor_value" phx-debounce="1000"
+          <LiveMonacoEditor.code_editor style="min-height: 600px" id="body" class="mt-10 resize" change="set_editor_value" phx-debounce="1000"
             opts={
               Map.merge(
                 LiveMonacoEditor.default_opts(),
                 %{
                   "wordWrap" => "on",
-                  "theme" => "vs-dark",
+                  "theme" => "vs-light",
                   "minimap" => %{"enabled" => true},
                   "wordBasedSuggestions" => "off"
                 }
               )
             }
           />
+          <.input id="slug" field={@form[:slug]} type="text" value="" placeholder="Slug will be generated" class="mb-10 pb-10"/>
+          <.input id="publishedDate" field={@form[:publishedDate]} type="datetime-local" value="" class="mb-10 pb-10"/>
           <.button id="save-draft-btn" name="save" value="draft" class="mt-10 bg-neutral-800 ">Save Draft</.button>
           <.button id="publish-draft-btn" name="save" value="publish" class="mt-10 bg-lime-200 hover:bg-lime-300 text-black border-2 border-lime-800">Publish</.button>
         </.form>
@@ -43,9 +46,6 @@ defmodule BlogWeb.WriteDraft do
       {:noreply, assign(socket, :source, body)}
     end
 
-    # def handle_event("set_editor_value", %{"textBody" => body}, socket) do
-    #   {:noreply, assign(socket, :source, body)}
-    # end
     def handle_event("set_editor_value", %{"value" => body}, socket) do
       {:noreply, assign(socket, :editor_value, body)}
     end
@@ -57,12 +57,21 @@ defmodule BlogWeb.WriteDraft do
     end
 
     def handle_event("save-draft",
-                                %{"draft" => %{"title" => title},
-                                "live_monaco_editor" => %{"file" => _body},
-                                "save" => save_action} = _params,
-                    socket) do
-      # Logger.info(socket)
-      contents = %{"title" => title, "body" => socket.assigns.editor_value}
+      %{
+        "draft" => %{"title" => title, "slug" => slug, "publishedDate" => publishedDate},
+        "live_monaco_editor" => %{"file" => _body},
+        "save" => save_action
+      } = _params,
+      socket) do
+
+      Logger.info(socket)
+
+      contents = %{
+        "title" => title,
+        "body" => socket.assigns.editor_value,
+        "slug" => slug,
+        "publishedDate" => publishedDate
+      }
 
       action_result =
         case save_action do
