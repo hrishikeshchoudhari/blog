@@ -19,7 +19,6 @@ defmodule Blog.Admin do
     html = Md.generate(post_text["body"])
     html_text = Map.put(post_text, "body", html)
 
-    
     %Post{}
     |> Post.changeset(html_text)
     |> Repo.insert!()

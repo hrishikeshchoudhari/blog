@@ -10,4 +10,8 @@ defmodule Blog.Landing do
   def all_posts() do
     Repo.all(Post)
   end
+
+  def about() do
+    {}
+  end
 end

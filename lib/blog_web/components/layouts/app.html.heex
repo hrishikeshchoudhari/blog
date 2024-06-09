@@ -1,91 +1,56 @@
 <header class="fixed top-0 w-full z-10 sm:px-4 lg:px-8 bg-white/50 backdrop-blur-sm shadow-md">
   <div class="flex items-center justify-center py-3">
-    <nav class="flex flex-row grow items-center gap-2 lg:gap-16 md:gap-8 text-neutral-950 font-snpro font-medium max-w-4xl mt-1">
-      <a href="/" class="inline-block lg:pl-32 md:pl-16 sm:pl-2">
-        <img src="/images/r-logo.png" width="50" alt="R logo">
-      </a>
+    <nav class="flex flex-row grow items-center gap-1 lg:gap-16 md:gap-8 text-neutral-950 font-snpro md:font-medium md:max-w-4xl mt-1">
+      <.link patch="/" class="inline-block lg:pl-32 md:pl-16 sm:pl-2">
+        <img src="/images/r-logo.png" width="50" alt="Rishi logo">
+      </.link>
       <!-- Adjusted the hover effect -->
-      <a href="/about" class="basis-2/12 text-center opacity-75 hover:opacity-85 border-b-8 border-transparent hover:border-lava hover:rounded">About</a>
-      <a href="/writing" class="basis-2/12 text-center border-b-8 border-lava rounded opacity-100">Writing</a>
-      <a href="/projects" class="basis-2/12 text-center opacity-75 hover:opacity-85 border-b-8 border-transparent hover:border-lava hover:rounded">Projects</a>
-      <a href="/readings" class="basis-2/12 text-center opacity-75 hover:opacity-85 border-b-8 border-transparent hover:border-lava hover:rounded">Readings</a>
-      <a href="/changelog" class="basis-2/12 text-center opacity-75 hover:opacity-85 border-b-8 border-transparent hover:border-lava hover:rounded">Changelog</a>
+      <.link patch="/about" class={"basis-2/12 text-center border-b-8 " <>
+        if @active_nav == :about, do: "border-lava rounded opacity-100", else: "border-transparent hover:opacity-85 hover:border-lava hover:rounded"}>
+        About
+      </.link>
+      
+      <.link patch="/" class={"basis-2/12 text-center border-b-8 " <>
+        if @active_nav == :writing, do: "border-lava rounded opacity-100", else: "border-transparent hover:opacity-85 hover:border-lava hover:rounded"}>
+        Writing
+      </.link>
+      
+      <.link patch="/projects" class={"basis-2/12 text-center border-b-8 " <>
+        if @active_nav == :projects, do: "border-lava rounded opacity-100", else: "border-transparent hover:opacity-85 hover:border-lava hover:rounded"}>
+        Projects
+      </.link>
+      
+      <.link patch="/readings" class={"basis-2/12 text-center border-b-8 " <>
+        if @active_nav == :readings, do: "border-lava rounded opacity-100", else: "border-transparent hover:opacity-85 hover:border-lava hover:rounded"}>
+        Readings
+      </.link>
+      
+      <.link patch="/changelog" class={"basis-2/12 text-center border-b-8 " <>
+        if @active_nav == :changelog, do: "border-lava rounded opacity-100", else: "border-transparent hover:opacity-85 hover:border-lava hover:rounded"}>
+        Changelog
+      </.link>
+      
     </nav>
   </div>
 </header>
 
 <div class="flex">
+  <!-- Sidebar Toggle Button -->
+  <!-- <button class="md:hidden px-4 py-2 text-white bg-blue-500" id="sidebarToggle">Toggle Sidebar</button> -->
+    
   <!-- Sidebar -->
-  <aside class="w-64 bg-lava border-r border-orange-600 text-white">
-    <!-- Sidebar content here -->
+  <aside class="xs:max-w-1 md:block md:w-64 bg-lava border-r border-orange-600 text-white">
     <div class="px-3 py-4 mt-24">
       <div class="mb-4">Link 1</div>
       <div class="mb-4">Link 2</div>
       <div class="mb-4">Link 3</div>
-      <!-- Add more sidebar links or content as needed -->
     </div>
   </aside>
 
   <!-- Main content area -->
-  <main class="flex-1 px-4 py-20 sm:px-6 lg:px-8">
+  <main class="flex-1 px-4 py-20 sm:px-6 lg:px-8  bg-chiffon-50">
     <div class="mx-auto max-w-4xl">
       <!-- Your existing main content -->
-      <div id="header-section">
-        <h1 class="mt-10 text-black text-4xl font-snpro mb-10 text-center font-medium">
-        Professionally experienced in Product Management and Cloud Systems Architecture. Managed teams of 25+ members distributed globally.
-        </h1>
-        <ul>
-        <li class="mb-1">
-          <div class="flex flex-row">
-              <div class="text-3xl w-36 text-teal-500 font-snpro font-medium tracking-tight">Code</div>
-              <div class="flex-col h-5 w-full pl-1">
-                <div class="w-full h-1 bg-gradient-to-r from-teal-500 to-teal-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-teal-500 to-teal-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-teal-500 to-teal-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-teal-500 to-teal-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-teal-500 to-teal-950 mb-1 rounded-l-lg"></div>
-              </div>
-            </div>
-          </li>
-          <li class="mb-1">
-            <div class="flex flex-row">
-              <div class="text-3xl w-36 text-amber-600 font-snpro font-medium tracking-tight">People</div>
-              <div class="flex-col h-5 w-full pl-1">
-                <div class="w-full h-1 bg-gradient-to-r from-amber-600 to-amber-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-amber-600 to-amber-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-amber-600 to-amber-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-amber-600 to-amber-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-amber-600 to-amber-950 mb-1 rounded-l-lg"></div>
-              </div>
-            </div>
-          </li>
-
-          <li class="mb-1">
-          <div class="flex flex-row">
-              <div class="text-3xl w-36 text-purple-600 font-snpro font-medium tracking-tight">Design</div>
-              <div class="flex-col h-5 w-full pl-1">
-                <div class="w-full h-1 bg-gradient-to-r from-purple-600 to-purple-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-purple-600 to-purple-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-purple-600 to-purple-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-purple-600 to-purple-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-purple-600 to-purple-950 mb-1 rounded-l-lg"></div>
-              </div>
-            </div>
-          </li>
-          <li class="mb-16">
-          <div class="flex flex-row">
-              <div class="text-3xl w-36 text-sky-600 font-snpro font-medium tracking-tight">Process</div>
-              <div class="flex-col h-5 w-full pl-1">
-                <div class="w-full h-1 bg-gradient-to-r from-sky-600 to-sky-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-sky-600 to-sky-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-sky-600 to-sky-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-sky-600 to-sky-950 mb-1 rounded-l-lg"></div>
-                <div class="w-full h-1 bg-gradient-to-r from-sky-600 to-sky-950 mb-1 rounded-l-lg"></div>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
       <.flash_group flash={@flash} />
       <%= @inner_content %>
     </div>

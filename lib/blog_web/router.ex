@@ -22,6 +22,7 @@ defmodule BlogWeb.Router do
 
     # get "/", PageController, :home
     live "/", Home
+    live "/about", About
     live "/admin/draft", WriteDraft
     live "/upload", UploadLive
   end
