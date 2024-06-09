@@ -4,8 +4,8 @@ defmodule BlogWeb.About do
     alias Blog.Landing
 
     def mount(_params, _session, socket) do
-      # about = Landing.about()
-      {:ok, assign(socket, active_nav: :about)}
+      about = Landing.about()
+      {:ok, assign(socket, active_nav: :about, about: about)}
     end
 
     def render(assigns) do
@@ -13,10 +13,25 @@ defmodule BlogWeb.About do
       <div class="about">
         <div id="header-section">
           <h1 class="mt-10 text-black text-4xl font-snpro mb-10 text-center font-medium">
-          Professionally experienced in Product Management and Cloud Systems Architecture. Managed teams of 25+ members distributed globally.
+            Hrishikesh (<img src="/images/r-logo.png" class="inline-block max-h-9" alt="Rishi logo">ishi) Choudhari
           </h1>
+          <div class="flex justify-center w-full">
+            <img id="rishi-profile-photo" src="/images/hrishikesh-photo-linkedin.png" style="max-height: 38rem" alt="Hrishikesh Choudhari">
+          </div>
+            <h2 class="mt-10 text-black text-xl font-snpro mb-10">
+            Skilled Operator at Product Management leading cross-functional teams to deliver products going from 0 to 1, and 1 to scale.
+            <br/>
+            <br/>
+            With a hands-on approach, I excel in driving product vision and execution, from ideation, design & execution to GTM strategy.
+            <br/>
+            <br/>
+            Experienced in complex SaaS offerings in cloud, analytics, and B2B environments.
+            <br/>
+            <br/>
+            Skilled in engaging with internal stakeholders and enabling marketing & sales, I bring a unique blend of hands-on programming, UX design, product management and customer development.
+          </h2>
           <ul>
-          <li class="mb-1">
+            <li class="mb-1">
             <div class="flex flex-row">
                 <div class="text-3xl w-36 text-teal-500 font-snpro font-medium tracking-tight">Code</div>
                 <div class="flex-col h-5 w-full pl-1">
@@ -65,6 +80,33 @@ defmodule BlogWeb.About do
                 </div>
               </div>
             </li>
+          </ul>
+          <h1 class="mt-10 text-black text-4xl font-snpro mb-10 text-center">
+          Areas of Expertise
+          </h1>
+          <ul class="grid xs:grid-cols-2 xs:gap-2 md:grid-cols-3 md:gap-4 list-disc">
+            <li>Cloud-native Product Strategy (AWS) </li>
+            <li>Business Analytics & Data Platforms</li>
+            <li>Modern Data Stack and Visualizations </li>
+            <li>Service Design Thinking</li>
+            <li>Technical Product Roadmaps</li>
+            <li>SaaS & PaaS Lifecycle Management</li>
+            <li>Customer Journey Mapping</li>
+            <li>ProductOps & DevOps</li>
+            <li>Lean Prototypal Iterations</li>
+            <li>Voice-of-Customer Feedback Loops</li>
+            <li>Data-driven Decision Making</li>
+            <li>User Experience Architecture</li>
+            <li>Stakeholder Engagement</li>
+            <li>Competitive Analysis</li>
+            <li>Innovation & Feature Ideation</li>
+            <li>Product Risk Assessment & Mitigation</li>
+            <li>CI / CD Environments</li>
+            <li>Strategic Partnerships & Alliances</li>
+            <li>Requirements documentation and traceability</li>
+            <li>Lean & agile philosophy</li>
+            <li>Behavioral Analytics</li>
+            <li>Hands-on programming in JavaScript, TypeScript, SQL, Elixir, BDD</li>
           </ul>
         </div>
       </div>
