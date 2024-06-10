@@ -5,7 +5,7 @@ defmodule BlogWeb.Home do
 
     def mount(_params, _session, socket) do
       posts = Landing.all_posts()
-      {:ok, assign(socket, posts: posts, active_nav: :writing)}
+      {:ok, assign(socket, posts: posts, active_nav: :writing, page_title: "All Posts")}
     end
 
     def render(assigns) do
