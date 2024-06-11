@@ -21,15 +21,15 @@
     </script>
   </head>
   <body class= "bg-white antialiased font-snpro">
-    <ul class="relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
+    <ul id="user_session_corner" class="font-snpro fixed bottom-0 left-0 z-50 flex items-center gap-4 px-4 py-2 sm:px-6 lg:px-8 bg-white bg-opacity-25 text-opacity-50 border-t border-gray-200 shadow">
       <%= if @current_users do %>
-        <li class="text-[0.8125rem] leading-6 text-zinc-900">
+        <li class="font-snpro text-[0.8125rem] text-zinc-900">
           <%= @current_users.email %>
         </li>
         <li>
           <.link
             href={~p"/users/settings"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+            class="font-snpro text-[0.8125rem] text-zinc-900 font-semibold hover:text-zinc-700"
           >
             Settings
           </.link>
@@ -38,7 +38,7 @@
           <.link
             href={~p"/users/log_out"}
             method="delete"
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+            class="font-snpro text-[0.8125rem] text-zinc-900 font-semibold hover:text-zinc-700"
           >
             Log out
           </.link>
