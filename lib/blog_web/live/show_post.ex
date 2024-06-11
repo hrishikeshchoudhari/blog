@@ -18,8 +18,8 @@ defmodule BlogWeb.ShowPost do
         <h1 class="text-neutral-850 text-4xl font-snpro mt-20 mb-5 tracking-tighter">
           <%= @post.title %>
         </h1>
-        <p class="text-neutral-400 mb-5"> <%= Timex.format!(@post.publishedDate, "{D} {Mfull} {YYYY}") %> </p>
-        <div class="text-neutral-950 tracking-tight text-xl font-snpro font-medium post-body"><%= raw @post.body %></div>
+        <p class="text-neutral-500 mb-5"> <%= Timex.format!(@post.publishedDate, "{D} {Mfull} {YYYY}") %> </p>
+        <div class="text-neutral-950 tracking-tight text-xl font-snpro post-body"><%= raw @post.body %></div>
       </div>
       """
     end

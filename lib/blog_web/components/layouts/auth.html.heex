@@ -1,0 +1,28 @@
+<div class="flex">
+  <!-- Main content area -->
+  <main class="flex-1 px-4 py-20 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-4xl">
+      <!-- Your existing main content -->
+      <.flash_group flash={@flash} />
+      <%= @inner_content %>
+    </div>
+  </main>
+</div>
+
+<footer class="bg-black text-gray-400 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div>
+      <h2 class="font-bold text-lg mb-4 text-gray-300">Column 1</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    </div>
+    <div>
+      <h2 class="font-bold text-lg mb-4 text-gray-300">Column 2</h2>
+      <p>Pellentesque habitant morbi tristique senectus et netus.</p>
+    </div>
+    <div>
+      <h2 class="font-bold text-lg mb-4 text-gray-300">Column 3</h2>
+      <p>Fusce nec tellus sed augue semper porta.</p>
+    </div>
+  </div>
+</footer>
+

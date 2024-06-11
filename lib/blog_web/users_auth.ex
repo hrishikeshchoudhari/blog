@@ -172,6 +172,15 @@ defmodule BlogWeb.UsersAuth do
     end
   end
 
+  # def on_mount(:set_active_nav_nil, _params, session, socket) do
+  #   socket = set_active_nav_nil(socket, session)
+  #   {:cont, socket}
+  # end
+
+  # defp set_active_nav_nil(socket, _session) do
+  #   Phoenix.Component.assign_new(socket, :active_nav, :nil)
+  # end
+
   defp mount_current_users(socket, session) do
     Phoenix.Component.assign_new(socket, :current_users, fn ->
       if users_token = session["users_token"] do

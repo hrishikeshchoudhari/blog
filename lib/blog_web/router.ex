@@ -55,7 +55,7 @@ defmodule BlogWeb.Router do
   scope "/", BlogWeb do
     pipe_through [:browser, :redirect_if_users_is_authenticated]
 
-    live_session :redirect_if_users_is_authenticated,
+    live_session :redirect_if_users_is_authenticated, layout: {BlogWeb.Layouts, :auth},
       on_mount: [{BlogWeb.UsersAuth, :redirect_if_users_is_authenticated}] do
       live "/users/register", UsersRegistrationLive, :new
       live "/users/log_in", UsersLoginLive, :new

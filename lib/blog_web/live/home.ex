@@ -15,11 +15,11 @@ defmodule BlogWeb.Home do
         <%= for post <- @posts do %>
           <li class="mt-14 ">
             <h3 class="text-neutral-850 text-4xl font-snpro mb-10 tracking-tighter">
-              <.link patch={"/post/" <> post.slug } class="text-current no-underline hover:underline">
+              <.link patch={"/post/" <> post.slug } class="hover:text-neutral-500">
                 <%= post.title %>
               </.link>
             </h3>
-            <div class="text-neutral-950 tracking-tight text-xl font-snpro font-medium post-body"><%= raw post.body %></div>
+            <div class="text-neutral-950 tracking-tight text-xl font-snpro post-body"><%= raw post.body %></div>
           </li>
         <% end %>
         </ul>

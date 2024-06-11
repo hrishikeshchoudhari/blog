@@ -58,6 +58,15 @@ defmodule BlogWeb do
     end
   end
 
+  def auth_live_view do
+    quote do
+      use Phoenix.LiveView,
+        layout: {BlogWeb.Layouts, :auth}
+
+      unquote(html_helpers())
+    end
+  end
+
   def live_component do
     quote do
       use Phoenix.LiveComponent
