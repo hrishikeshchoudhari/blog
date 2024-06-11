@@ -21,11 +21,11 @@ defmodule BlogWeb.Router do
     pipe_through :browser
 
     # get "/", PageController, :home
+
     live "/", Home
     live "/post/:slug", ShowPost
     live "/about", About
-    live "/admin/draft", WriteDraft
-    live "/upload", UploadLive
+
   end
 
   # Other scopes may use custom stacks.
@@ -71,6 +71,10 @@ defmodule BlogWeb.Router do
 
     live_session :require_authenticated_users,
       on_mount: [{BlogWeb.UsersAuth, :ensure_authenticated}] do
+
+      live "/admin/draft", WriteDraft
+      live "/upload", UploadLive
+
       live "/users/settings", UsersSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UsersSettingsLive, :confirm_email
     end
