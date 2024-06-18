@@ -11,9 +11,7 @@ defmodule BlogWeb.WriteDraft do
       {:ok,
         assign(socket,
           page_title: "Write Draft",
-          form: to_form(changeset),
-          active_nav: :writing
-        )
+          form: to_form(changeset))
       }
     end
 
@@ -77,13 +75,15 @@ defmodule BlogWeb.WriteDraft do
         case save_action do
           "draft" ->
             Admin.save_draft(contents)
+            {:noreply, put_flash(socket, :info, "Draft Saved")}
           "publish" ->
             Admin.publish_post(contents)
+            {:noreply, put_flash(socket, :info, "Post published")}
         end
 
-      Logger.info(action_result)
-
-      {:noreply, socket}
+      # Logger.info(action_result)
+      # put_flash(socket, :info, "Draft Saved!")
+      # {:noreply, socket}
     end
 
 
