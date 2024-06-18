@@ -69,9 +69,10 @@ defmodule BlogWeb.Router do
   scope "/", BlogWeb do
     pipe_through [:browser, :require_authenticated_users]
 
-    live_session :require_authenticated_users,
+    live_session :require_authenticated_users, layout: {BlogWeb.Layouts, :admin},
       on_mount: [{BlogWeb.UsersAuth, :ensure_authenticated}] do
 
+      live "/admin", AdminHome
       live "/admin/draft", WriteDraft
       live "/upload", UploadLive
 
