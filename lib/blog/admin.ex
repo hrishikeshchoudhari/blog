@@ -16,16 +16,19 @@ defmodule Blog.Admin do
   end
 
   def publish_post(post_text) do
-    html = Md.generate(post_text["body"])
-    html_text = Map.put(post_text, "body", html)
+    # html = Md.generate(post_text["body"])
+    # html_text = Map.put(post_text, "body", html)
+
+    # %Post{}
+    # |> Post.changeset(html_text)
+    # |> Repo.insert!()
+
+    post_text
+    |> Map.update!("body", &Md.generate/1)  # Transform the 'body' directly using `Map.update!`
 
     %Post{}
-    |> Post.changeset(html_text)
-    |> Repo.insert!()
+    |> Post.changeset(post_text)            # Create a changeset with the updated map
+    |> Repo.insert!()                       # Insert the post into the database
   end
-
-
-
-  # def draft_changeset
 
 end
