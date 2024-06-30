@@ -20,6 +20,7 @@ defmodule BlogWeb.ShowPost do
         </h1>
         <p class="text-neutral-500 mb-5"> <%= Timex.format!(@post.publishedDate, "{D} {Mfull} {YYYY}") %> </p>
         <div class="text-neutral-950 tracking-tight text-xl font-snpro post-body"><%= raw @post.body %></div>
+        <div id="post-bottom-border" class="mt-24 border-2 border-chiffon-200"></div>
       </div>
       """
     end

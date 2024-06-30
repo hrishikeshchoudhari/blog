@@ -34,12 +34,9 @@
   </div>
 </header>
 
-<div class="flex">
-  <!-- Sidebar Toggle Button -->
-  <!-- <button class="md:hidden px-4 py-2 text-white bg-blue-500" id="sidebarToggle">Toggle Sidebar</button> -->
-    
+<div class="flex">    
   <!-- Sidebar -->
-  <aside class="xs:max-w-1 md:block md:w-64 bg-lava border-r border-orange-600 text-chiffon-50 font-medium">
+  <aside class="hidden lg:block lg:w-64 bg-lava border-r border-orange-600 text-chiffon-50 font-medium">
     <div class="px-3 py-4 mt-24">
       <div class="mb-4">Link 1</div>
       <div class="mb-4">Link 2</div>
@@ -47,8 +44,14 @@
     </div>
   </aside>
 
+  <!-- Mobile sidebar -->
+  <aside class="lg:hidden block absolute z-10 mt-24 mx-auto text-center w-full font-medium">
+    <div>See All Tags</div>
+    <div>Current Tag</div>
+  </aside>
+
   <!-- Main content area -->
-  <main class="flex-1 px-4 py-20 sm:px-6 lg:px-8  bg-chiffon-50">
+  <main class="flex-1 px-4 py-24 sm:px-6 lg:px-8  bg-chiffon-50">
     <div class="mx-auto max-w-4xl">
       <!-- Your existing main content -->
       <.flash_group flash={@flash} />
