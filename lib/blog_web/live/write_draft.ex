@@ -81,9 +81,7 @@ defmodule BlogWeb.WriteDraft do
             {:noreply, put_flash(socket, :info, "Post published")}
         end
 
-      # Logger.info(action_result)
-      # put_flash(socket, :info, "Draft Saved!")
-      # {:noreply, socket}
+      Logger.info(action_result)
     end
 
 

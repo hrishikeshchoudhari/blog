@@ -3,8 +3,8 @@ defmodule BlogWeb.ListDraft do
     require Logger
     require LiveMonacoEditor
     require Md
-    alias Blog.Admin
-    alias Blog.Admin.Draft
+    # alias Blog.Admin
+    # alias Blog.Admin.Draft
 
     def mount(_params, _session, _socket) do
       # changeset = Admin.Draft.changeset(%Draft{}, %{})
