@@ -23,7 +23,7 @@ defmodule BlogWeb.Router do
     # get "/", PageController, :home
 
     live "/", Home
-    live "/post/:slug", ShowPost
+    live "/:tag/:slug", ShowPost
     live "/about", About
 
   end
