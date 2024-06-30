@@ -31,4 +31,11 @@ defmodule Blog.Admin do
     |> Repo.insert!()                       # Insert the post into the database
   end
 
+  def all_drafts() do
+    # %Draft{}
+    # |> Repo.all()
+
+    Repo.all(Draft)
+  end
+
 end
