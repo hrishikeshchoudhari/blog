@@ -1,5 +1,5 @@
 defmodule BlogWeb.WriteDraft do
-    use BlogWeb, :live_view
+    use BlogWeb, :admin_live_view
     require Logger
     require LiveMonacoEditor
     require Md
