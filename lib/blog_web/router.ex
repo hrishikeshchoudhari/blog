@@ -17,17 +17,6 @@ defmodule BlogWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", BlogWeb do
-    pipe_through :browser
-
-    # get "/", PageController, :home
-
-    live "/", Home
-    live "/:tag/:slug", ShowPost
-    live "/about", About
-
-  end
-
   # Other scopes may use custom stacks.
   # scope "/api", BlogWeb do
   #   pipe_through :api
@@ -75,6 +64,7 @@ defmodule BlogWeb.Router do
       live "/admin", AdminHome
       live "/admin/draft", WriteDraft
       live "/upload", UploadLive
+      live "/admin/tags", TagsActions
 
       live "/users/settings", UsersSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UsersSettingsLive, :confirm_email
@@ -91,5 +81,14 @@ defmodule BlogWeb.Router do
       live "/users/confirm/:token", UsersConfirmationLive, :edit
       live "/users/confirm", UsersConfirmationInstructionsLive, :new
     end
+  end
+
+  scope "/", BlogWeb do
+    pipe_through :browser
+
+    live "/", Home
+    live "/about", About
+    live "/:tag/:slug", ShowPost
+
   end
 end
