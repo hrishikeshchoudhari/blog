@@ -15,7 +15,7 @@ defmodule Blog.Admin.Tag do
   def changeset(tag, attrs) do
     tag
     |> cast(attrs, [:name, :slug, :description])
-    |> unique_constraint(:name)
     |> validate_required([:name, :slug, :description])
+    |> unique_constraint(:name)
   end
 end

@@ -3,7 +3,7 @@ defmodule Blog.Admin do
   The Admin context
   """
   import Ecto.Query, warn: false
-  alias Blog.Admin.Draft
+  alias Blog.Admin.{Draft, Tag}
   alias Blog.Post
   alias Blog.Repo
   require Md
@@ -37,5 +37,17 @@ defmodule Blog.Admin do
 
     Repo.all(Draft)
   end
+
+  def save_tag(tag_content) do
+    %Tag{}
+    |> Tag.changeset(tag_content)
+    |> Repo.insert()
+  end
+
+  def all_tags() do
+    Repo.all(Tag)
+  end
+
+
 
 end
