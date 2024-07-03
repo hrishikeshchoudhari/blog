@@ -22,7 +22,7 @@ defmodule BlogWeb.TagsActions do
         <.form for={@form} phx-submit="save-tag">
           <.input id="name" field={@form[:name]} type="text" value="" placeholder="What is the tag's string" class="mb-10 pb-10"/>
           <.input id="slug" field={@form[:slug]} type="text" value="" placeholder="What is the slug for this tag" class="mb-10 pb-10"/>
-          <.input id="description" field={@form[:description]} type="text" value="" errors={} placeholder="Some descriptive text" class="mb-10 pb-10"/>
+          <.input id="description" field={@form[:description]} type="text" value="" placeholder="Some descriptive text" class="mb-10 pb-10"/>
           <.button id="save-tag-btn" class="mt-10 bg-neutral-800 ">Save Tag</.button>
         </.form>
         <br/>

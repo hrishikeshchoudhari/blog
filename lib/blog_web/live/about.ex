@@ -5,7 +5,8 @@ defmodule BlogWeb.About do
 
     def mount(_params, _session, socket) do
       about = Landing.about()
-      {:ok, assign(socket, active_nav: :about, about: about, page_title: "About Me")}
+      tags = Landing.all_tags()
+      {:ok, assign(socket, active_nav: :about, about: about, tags: tags, page_title: "About Me")}
     end
 
     def render(assigns) do
