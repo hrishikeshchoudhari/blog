@@ -39,7 +39,7 @@
   <aside class="hidden lg:block lg:w-64 bg-lava border-r border-orange-600 text-chiffon-50 font-medium">
     <ul class="px-3 py-4 mt-24">
       <%= for tag <- @tags do %>
-      <li><.link patch={tag.slug} class="block mb-4"><%= tag.name %></.link></li>
+      <li><.link navigate={"/tag/" <> tag.slug} class="block mb-4"><%= tag.name %></.link></li>
       <% end %>
     </ul>
   </aside>

@@ -48,6 +48,9 @@ defmodule Blog.Admin do
     Repo.all(Tag)
   end
 
+  def nice_work() do
+    #this is a nice way to write code
+  end
 
 
 end

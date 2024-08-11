@@ -88,9 +88,9 @@ defmodule BlogWeb.Router do
 
     live "/", Home
     live "/about", About
+    # live "/post/:slug", ShowPost
+    live "/tag/:tagslug", AllPostsForTag
     live "/post/:slug", ShowPost
-    # live "/:tagslug", ShowPost
-    # live "/:tag/:slug", ShowPost
 
   end
 end

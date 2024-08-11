@@ -9,7 +9,8 @@ defmodule BlogWeb.ShowPost do
     def mount(params, _session, socket) do
       %{"slug" => slug} = params
       post = Landing.get_post_by_slug(slug)
-      {:ok, assign(socket, post: post, active_nav: :writing, page_title: post.title)}
+      tags = Landing.all_tags()
+      {:ok, assign(socket, post: post, tags: tags, active_nav: :writing, page_title: post.title)}
     end
 
     def render(assigns) do
