@@ -20,7 +20,7 @@ defmodule BlogWeb.Router do
   # Other scopes may use custom stacks.
   # scope "/api", BlogWeb do
   #   pipe_through :api
-  # end
+  # ensure_authenticated
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:blog, :dev_routes) do
@@ -62,7 +62,11 @@ defmodule BlogWeb.Router do
       on_mount: [{BlogWeb.UsersAuth, :ensure_authenticated}] do
 
       live "/admin", AdminHome
+      live "/admin/posts", AdminPosts
+      live "/admin/pages", AdminPages
       live "/admin/draft", WriteDraft
+      live "/admin/post/:id/edit", EditContent, :edit_post, as: :edit_post
+      live "/admin/draft/:id/edit", EditContent, :edit_draft, as: :edit_draft
       live "/upload", UploadLive
       live "/admin/tags", TagsActions
 
@@ -76,7 +80,7 @@ defmodule BlogWeb.Router do
 
     delete "/users/log_out", UsersSessionController, :delete
 
-    live_session :current_users,
+    live_session :current_users, layout: {BlogWeb.Layouts, :auth},
       on_mount: [{BlogWeb.UsersAuth, :mount_current_users}] do
       live "/users/confirm/:token", UsersConfirmationLive, :edit
       live "/users/confirm", UsersConfirmationInstructionsLive, :new
@@ -91,6 +95,9 @@ defmodule BlogWeb.Router do
     # live "/post/:slug", ShowPost
     live "/tag/:tagslug", AllPostsForTag
     live "/post/:slug", ShowPost
+    live "/projects", Projects
+    live "/readings", Readings
+    live "/changelog", Changelog
 
   end
 end

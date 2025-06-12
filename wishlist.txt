@@ -1,0 +1,53 @@
+
+Unique features
+- OCR for handwritten posts
+- Visitor can see when the author is in the "study room" writing a new post under the  category
+- Visitor can chat with the author using a chat widget, after validating his email
+- Author can use voice dictation to write, integration with LLM Speech to Text
+- Visitor can listen to articles, using integration with LLM Text to Speech
+- Author can  certain keywords, which automatically form a search term when published, and visitor can click on it to view all articles where that keyword is tokenized.
+- Article URLs submitted to Hacker News / Reddit can function as "discussion here"
+- Update the home page automatically when there's a new article published
+- Show a flash message when there's a new article published
+- Small button next to profile image could show a WebGL animation like acko.net
+- Use Generative Art images as articles' cover images. These could be generated based on the semantic content of the article
+- Fantastic about page with photogenic photo
+
+Bio listing all achievements
+- American society of civil engineers
+- Intel Atom
+- Reverse engineering CD crack
+- Touch gesture to swap items
+- Throughput visualization
+- GRC Pulse award
+- Bachelor's and masters education with GPA and Dean's list awards president's list award
+- Dreamlance
+- MSc thesis with link to vectora.app
+
+ 
+Category / sections
+- About
+- Writings
+- Projects
+- Stance (My Beliefs)
+- Media - photography / videos / music
+- Tools
+- Dictionary / Glossary
+- Interstitial journal
+- Blog's changelog
+- Uploaded media gallery
+- Drop in (instant video chat with the author)
+- Library
+- Contributions
+  - Archive.org
+  - Wikipedia
+  - Prachyam
+- Tags
+- Post archive
+- Diataxis types as labels
+- Visualizations library
+- interstitial journaling - Interstitch
+- Reading library / visual bookshelf
+- NotByAI badge
+- Product Management templates
+- My Bookmarks

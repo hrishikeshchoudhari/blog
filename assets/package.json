@@ -1,0 +1,9 @@
+{
+  "name": "assets",
+  "version": "1.0.0",
+  "description": "Blog assets",
+  "scripts": {},
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.10"
+  }
+}

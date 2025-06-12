@@ -87,11 +87,53 @@ module.exports = {
       fontFamily: {
         snpro: 'SNPro',
         calistoga: 'Calistoga'
-      }
+      },
+      typography: ({ theme }) => ({
+        DEFAULT: {
+          css: {
+            color: theme('colors.neutral.850'),
+            a: {
+              color: theme('colors.sacramento.600'),
+              textDecoration: 'underline',
+              '&:hover': {
+                color: theme('colors.sacramento.700'),
+              },
+            },
+            h2: {
+              fontFamily: 'Calistoga',
+              fontWeight: '400',
+            },
+            h3: {
+              fontFamily: 'Calistoga',
+              fontWeight: '400',
+            },
+            'code::before': {
+              content: '""',
+            },
+            'code::after': {
+              content: '""',
+            },
+            code: {
+              backgroundColor: theme('colors.chiffon.100'),
+              padding: '0.25rem 0.375rem',
+              borderRadius: '0.25rem',
+              fontWeight: '400',
+            },
+            pre: {
+              backgroundColor: theme('colors.neutral.900'),
+            },
+            blockquote: {
+              borderLeftColor: theme('colors.lava'),
+              fontStyle: 'italic',
+            },
+          },
+        },
+      }),
     },
   },
   plugins: [
     require("@tailwindcss/forms"),
+    require("@tailwindcss/typography"),
     // Allows prefixing tailwind classes with LiveView classes to add rules
     // only when LiveView classes are applied, for example:
     //

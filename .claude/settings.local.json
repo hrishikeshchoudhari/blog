@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(mix hex.outdated:*)",
+      "Bash(ls:*)",
+      "Bash(brew services:*)",
+      "Bash(rm:*)",
+      "Bash(touch:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker-compose:*)",
+      "Bash(chmod:*)",
+      "Bash(curl:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker exec:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:hexdocs.pm)"
+    ],
+    "deny": []
+  }
+}

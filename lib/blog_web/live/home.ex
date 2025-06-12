@@ -17,12 +17,24 @@ defmodule BlogWeb.Home do
         <ul>
         <%= for post <- @posts do %>
           <li class="mt-14 ">
-            <h3 class="text-neutral-850 text-4xl font-snpro mb-10 tracking-tighter">
+            <h3 class="text-neutral-850 text-4xl font-snpro mb-4 tracking-tighter">
               <.link patch={"/post/" <> post.slug} class="hover:text-neutral-500">
                 <%= post.title %>
               </.link>
             </h3>
-            <div class="text-neutral-950 tracking-tight text-xl font-snpro post-body"><%= raw post.body %></div>
+            <%= if post.tags != [] do %>
+              <div class="mb-4">
+                <%= for tag <- post.tags do %>
+                  <.link patch={"/tag/" <> tag.slug} class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2 hover:bg-gray-300">
+                    #<%= tag.name %>
+                  </.link>
+                <% end %>
+              </div>
+            <% end %>
+            <div class="text-gray-500 text-sm mb-4">
+              <%= Calendar.strftime(post.publishedDate, "%B %d, %Y") %>
+            </div>
+            <div class="prose prose-xl prose-neutral max-w-none font-snpro post-body"><%= raw post.body %></div>
           </li>
         <% end %>
         </ul>

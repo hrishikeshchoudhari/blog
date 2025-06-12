@@ -1,14 +1,22 @@
 import Config
 
 # Configure your database
-config :blog, Blog.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "blog_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+if database_url = System.get_env("DATABASE_URL") do
+  config :blog, Blog.Repo,
+    url: database_url,
+    stacktrace: true,
+    show_sensitive_data_on_connection_error: true,
+    pool_size: 10
+else
+  config :blog, Blog.Repo,
+    username: "postgres",
+    password: "postgres",
+    hostname: "localhost",
+    database: "blog_dev",
+    stacktrace: true,
+    show_sensitive_data_on_connection_error: true,
+    pool_size: 10
+end
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -17,9 +25,8 @@ config :blog, Blog.Repo,
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
 config :blog, BlogWeb.Endpoint,
-  # Binding to loopback ipv4 address prevents access from other machines.
-  # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  # Binding to all interfaces to allow access from outside the container
+  http: [ip: {0, 0, 0, 0}, port: 4000],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,

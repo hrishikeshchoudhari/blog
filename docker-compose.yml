@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  blog:
+    build: .
+    ports:
+      - "4000:4000"  # Phoenix server
+      - "5433:5432"  # PostgreSQL (5433 on host, 5432 in container)
+    volumes:
+      - .:/app
+      - deps:/app/deps
+      - build:/app/_build
+      - node_modules:/app/assets/node_modules
+      - postgres_data:/var/lib/postgresql/17/main
+    environment:
+      - MIX_ENV=dev
+      - DATABASE_URL=postgres://blog:blog_dev_password@localhost/blog_dev
+    stdin_open: true
+    tty: true
+    networks:
+      - blog_network
+
+  # Separate service for production/staging
+  blog_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "4001:4000"  # Phoenix server on different port
+      - "5433:5432"  # PostgreSQL on different port
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/17/main
+    environment:
+      - MIX_ENV=prod
+      - DATABASE_URL=postgres://blog:blog_prod_password@localhost/blog_prod
+      - SECRET_KEY_BASE=your_secret_key_base_here_64_chars_minimum_replace_this_in_production
+      - PHX_HOST=localhost
+    networks:
+      - blog_network
+    profiles:
+      - production
+
+volumes:
+  deps:
+  build:
+  node_modules:
+  postgres_data:
+  postgres_prod_data:
+
+networks:
+  blog_network:
+    driver: bridge

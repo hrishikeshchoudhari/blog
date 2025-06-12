@@ -1,0 +1,133 @@
+Blog Application Analysis
+========================
+
+Project Type: Phoenix LiveView Blog Application
+Language: Elixir
+Framework: Phoenix 1.7.10 with LiveView 0.20.1
+
+ARCHITECTURE OVERVIEW
+--------------------
+The application follows Phoenix's standard directory structure with clear separation of concerns:
+
+1. Core Business Logic (lib/blog/)
+   - Accounts: User authentication and management
+   - Admin: Draft and tag management contexts
+   - Landing: Public content queries
+   - Post: Published blog post schema
+
+2. Web Layer (lib/blog_web/)
+   - Router: Defines public, authenticated, and admin routes
+   - LiveViews: 15 LiveView modules handling all UI interactions
+   - Components: Shared UI components and layouts
+
+3. Database Structure
+   - Users with authentication tokens
+   - Drafts (unpublished content)
+   - Posts (published content)
+   - Tags (content categorization)
+   - Missing: Join tables for many-to-many tag relationships
+
+KEY FEATURES
+------------
+1. Authentication System
+   - Full user registration, login, password reset
+   - Email confirmation flow
+   - Session management
+
+2. Content Management
+   - Draft writing with Monaco editor
+   - Markdown support with live preview
+   - Publishing workflow (draft -> post)
+   - Auto-save functionality
+
+3. Tag System
+   - Basic CRUD for tags (Create/Read implemented)
+   - Slug-based URLs for tag pages
+   - Tag listing and filtering (partially implemented)
+
+4. Admin Interface
+   - Dedicated admin layout
+   - Draft management
+   - Tag management
+   - File upload capability
+
+CURRENT STATE & ISSUES
+---------------------
+1. Work in Progress
+   - Tag-to-content relationships not implemented
+   - Draft list in admin not clickable
+   - Tag selection in editor not functional
+   - Update/Delete operations for tags missing
+
+2. Modified Files (uncommitted)
+   - lib/blog_web/live/about.ex
+   - lib/blog_web/live/write_draft.ex
+   - lib/blog_web/router.ex
+   - mix.lock
+
+3. Technical Debt - ALL RESOLVED ✓
+   - Added unique slug constraints to Draft and Post schemas
+   - Created many-to-many join tables (drafts_tags and posts_tags)
+   - Implemented complete tag integration:
+     * Tags can be selected when creating/editing drafts
+     * Tags are saved with drafts and posts
+     * Tags are displayed on posts in the home page
+     * Tags link to tag-specific pages
+
+DEVELOPMENT SETUP
+----------------
+- Database: PostgreSQL 17 running inside Docker container
+- Assets: Tailwind CSS + ESBuild
+- Email: Swoosh (with Postmark for production)
+- Development Environment: Fully containerized with Docker
+  * All-in-one Dockerfile with Elixir 1.16.3, Phoenix, and PostgreSQL 17
+  * docker-compose.yml for easy development with volume mounts
+  * Hot-reloading enabled - edit locally, see changes immediately
+  * PostgreSQL accessible on localhost:5433
+  * Phoenix app on localhost:4000
+- Deployment: Moving from Fly.io to Hetzner server
+  * Old Fly.io configuration removed
+  * Docker setup ready for Hetzner deployment
+
+PACKAGE VERSIONS
+---------------
+Many packages are outdated. Key updates available:
+- Phoenix: 1.7.14 → 1.7.21 (minor updates)
+- Phoenix LiveView: 0.20.17 → 1.0.17 (MAJOR version jump!)
+- Phoenix HTML: 3.3.4 → 4.2.1 (breaking changes)
+- Tailwind: 0.2.3 → 0.3.1
+- ESBuild: 0.8.1 → 0.10.0
+- Swoosh: 1.17.1 → 1.19.2
+- BCrypt Elixir: 3.1.0 → 3.3.2
+- Several others with minor updates
+
+Note: Some updates marked "not possible" due to dependency constraints
+
+DATABASE SETUP
+--------------
+PostgreSQL 17 is now running INSIDE Docker container:
+- No longer using the macOS native PostgreSQL
+- PostgreSQL 17 (latest) included in the all-in-one Docker container
+- Accessible on localhost:5433 (mapped from container's 5432)
+- Database credentials: username=blog, password=blog_dev_password
+- Data persisted via Docker volumes
+- Automatic database creation and migration on container start
+
+DOCKER SETUP COMPLETED
+---------------------
+- Created all-in-one Dockerfile with Elixir, Phoenix, PostgreSQL 17, and Node.js
+- docker-compose.yml configured for development with proper volume mounts
+- Hot-reloading working - edit files locally, see changes immediately in container
+- README_DOCKER.md created with full setup instructions
+- docker-entrypoint.sh handles dependency installation and database setup
+- Development workflow fully functional
+
+RECOMMENDATIONS
+---------------
+1. Complete tag system implementation with join tables
+2. Add slug uniqueness constraints
+3. Implement draft loading in editor
+4. Add tag selection to publishing workflow
+5. Consider UUID migration for better distributed system support
+6. Update packages, especially Phoenix LiveView to 1.0 (major milestone release)
+7. Deploy to Hetzner server using Docker (just copy and run docker-compose)
