@@ -6,6 +6,8 @@ defmodule BlogWeb.EditContent do
   alias Blog.Admin
   alias Blog.Post
   alias Blog.Admin.Draft
+  alias Blog.Media
+  import BlogWeb.Components.MediaPicker
 
   def mount(%{"id" => id}, _session, socket) do
     type = case socket.assigns.live_action do
@@ -36,6 +38,9 @@ defmodule BlogWeb.EditContent do
     editor_value = content.raw_body || content.body
     editing_html = is_nil(content.raw_body)
     
+    user = socket.assigns.current_users
+    media_items = Media.list_media_items(user.id)
+    
     {:ok,
       assign(socket,
         active_admin_nav: if(type == "post", do: :posts, else: :dashboard),
@@ -48,20 +53,24 @@ defmodule BlogWeb.EditContent do
         selected_tag_ids: selected_tag_ids,
         editor_value: editor_value,
         editing_html: editing_html,
-        show_syntax_guide: false)
+        show_syntax_guide: false,
+        show_media_picker: false,
+        media_items: media_items,
+        selected_media: nil,
+        media_size: "medium")
     }
   end
 
   def render(assigns) do
     ~H"""
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-6xl mx-auto" id="edit-content-container" phx-hook="MonacoUpdater">
       <!-- Page Header -->
       <div class="mb-6">
         <h1 class="text-3xl font-bold text-neutral-850">Edit <%= String.capitalize(@content_type) %></h1>
         <p class="mt-2 text-neutral-600">Update your <%= @content_type %>.</p>
       </div>
 
-      <.form for={@form} phx-submit="update-content" class="space-y-6">
+      <.form for={@form} phx-submit="update-content" phx-change="validate" class="space-y-6">
         <div class="bg-white rounded-lg shadow-sm border-2 border-chiffon-200">
           <!-- Title Section -->
           <div class="p-6 border-b border-chiffon-200">
@@ -80,18 +89,33 @@ defmodule BlogWeb.EditContent do
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-medium text-neutral-700">Content</label>
               <%= if !@editing_html do %>
-                <button 
-                  type="button"
-                  phx-click="toggle-syntax-guide"
-                  class="text-sm text-sacramento-600 hover:text-sacramento-700 font-medium flex items-center gap-1"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Markdown Syntax Guide
-                </button>
+                <div class="flex items-center gap-2">
+                  <.media_picker 
+                    show_media_picker={@show_media_picker}
+                    media_items={@media_items}
+                    selected_media={@selected_media}
+                  />
+                  <button 
+                    type="button"
+                    phx-click="toggle-syntax-guide"
+                    class="text-sm text-sacramento-600 hover:text-sacramento-700 font-medium flex items-center gap-1"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Markdown Syntax Guide
+                  </button>
+                </div>
               <% end %>
             </div>
+            
+            <%= if @form[:body].errors != [] do %>
+              <div class="mb-2">
+                <%= for error <- @form[:body].errors do %>
+                  <p class="text-sm text-red-600"><%= translate_error(error) %></p>
+                <% end %>
+              </div>
+            <% end %>
             
             <%= if @editing_html do %>
               <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -282,7 +306,29 @@ defmodule BlogWeb.EditContent do
     {:noreply, assign(socket, :editor_value, body)}
   end
 
-  def handle_event("validate", %{"_target" => ["live_monaco_editor", "my_file.html"]}, socket) do
+  def handle_event("validate", %{"post" => content_params}, socket) when socket.assigns.content_type == "post" do
+    content_params = Map.put(content_params, "body", socket.assigns.editor_value || "")
+    
+    changeset =
+      socket.assigns.content
+      |> Post.changeset(content_params)
+      |> Map.put(:action, :validate)
+    
+    {:noreply, assign(socket, form: to_form(changeset))}
+  end
+  
+  def handle_event("validate", %{"draft" => content_params}, socket) when socket.assigns.content_type == "draft" do
+    content_params = Map.put(content_params, "body", socket.assigns.editor_value || "")
+    
+    changeset =
+      socket.assigns.content
+      |> Draft.changeset(content_params)
+      |> Map.put(:action, :validate)
+    
+    {:noreply, assign(socket, form: to_form(changeset))}
+  end
+  
+  def handle_event("validate", %{"_target" => ["live_monaco_editor", _]}, socket) do
     # ignore change events from the editor field
     {:noreply, socket}
   end
@@ -306,29 +352,39 @@ defmodule BlogWeb.EditContent do
       "tag_ids" => tag_ids
     }
 
-    try do
-      result = case socket.assigns.content_type do
-        "post" -> Admin.update_post(socket.assigns.content, contents)
-        "draft" -> Admin.update_draft(socket.assigns.content, contents)
+    # First validate the changeset
+    changeset = case socket.assigns.content_type do
+      "post" -> Post.changeset(socket.assigns.content, contents)
+      "draft" -> Draft.changeset(socket.assigns.content, contents)
+    end
+    |> Map.put(:action, :update)
+
+    if changeset.valid? do
+      try do
+        result = case socket.assigns.content_type do
+          "post" -> Admin.update_post(socket.assigns.content, contents)
+          "draft" -> Admin.update_draft(socket.assigns.content, contents)
+        end
+        
+        case result do
+          {:ok, _updated_content} ->
+            destination = if socket.assigns.content_type == "post", do: "/admin/posts", else: "/admin"
+            {:noreply, 
+              socket
+              |> put_flash(:info, "#{String.capitalize(socket.assigns.content_type)} updated successfully")
+              |> push_navigate(to: destination)}
+          {:error, changeset} ->
+            {:noreply, 
+              socket
+              |> assign(form: to_form(changeset))}
+        end
+      rescue
+        e ->
+          Logger.error("Error updating content: #{inspect(e)}")
+          {:noreply, put_flash(socket, :error, "Error updating #{socket.assigns.content_type}: #{Exception.message(e)}")}
       end
-      
-      case result do
-        {:ok, _updated_content} ->
-          destination = if socket.assigns.content_type == "post", do: "/admin/posts", else: "/admin"
-          {:noreply, 
-            socket
-            |> put_flash(:info, "#{String.capitalize(socket.assigns.content_type)} updated successfully")
-            |> push_navigate(to: destination)}
-        {:error, changeset} ->
-          {:noreply, 
-            socket
-            |> put_flash(:error, "Error updating #{socket.assigns.content_type}")
-            |> assign(form: to_form(changeset))}
-      end
-    rescue
-      e ->
-        Logger.error("Error updating content: #{inspect(e)}")
-        {:noreply, put_flash(socket, :error, "Error updating #{socket.assigns.content_type}: #{Exception.message(e)}")}
+    else
+      {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
 
@@ -356,6 +412,67 @@ defmodule BlogWeb.EditContent do
       e ->
         Logger.error("Error publishing draft: #{inspect(e)}")
         {:noreply, put_flash(socket, :error, "Error publishing draft: #{Exception.message(e)}")}
+    end
+  end
+
+  def handle_event("toggle-media-picker", _, socket) do
+    {:noreply, assign(socket, :show_media_picker, !socket.assigns.show_media_picker)}
+  end
+
+  def handle_event("close-media-picker", _, socket) do
+    {:noreply, assign(socket, show_media_picker: false, selected_media: nil)}
+  end
+
+  def handle_event("select-media", %{"id" => id}, socket) do
+    media = Enum.find(socket.assigns.media_items, &(&1.id == String.to_integer(id)))
+    {:noreply, assign(socket, selected_media: media)}
+  end
+
+  def handle_event("update-media-size", %{"media_size" => size}, socket) do
+    {:noreply, assign(socket, media_size: size)}
+  end
+
+  def handle_event("update-media-alt", params, socket) do
+    # Handle both phx-blur format ({"value" => ...}) and phx-change format ({"media_alt" => ...})
+    alt_text = params["media_alt"] || params["value"] || ""
+    
+    if socket.assigns.selected_media do
+      # Update the alt text in memory for insertion
+      updated_media = Map.put(socket.assigns.selected_media, :alt_text, alt_text)
+      {:noreply, assign(socket, selected_media: updated_media)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("insert-media", _, socket) do
+    if media = socket.assigns.selected_media do
+      # Determine which image path to use based on selected size
+      image_path = case socket.assigns.media_size do
+        "thumbnail" -> media.thumbnail_path || media.path
+        "medium" -> media.medium_path || media.path
+        "full" -> media.path
+        _ -> media.path
+      end
+
+      # Generate markdown for the image
+      alt_text = media.alt_text || media.original_filename || "Image"
+      markdown = "![#{alt_text}](#{image_path})"
+
+      # Insert at cursor position (for now, append to end)
+      # In a real implementation, you'd insert at cursor position
+      current_value = socket.assigns.editor_value || ""
+      new_value = if current_value == "", do: markdown, else: current_value <> "\n\n" <> markdown
+
+      # Update the editor value and close the media picker
+      {:noreply,
+       socket
+       |> assign(editor_value: new_value)
+       |> assign(show_media_picker: false)
+       |> assign(selected_media: nil)
+       |> push_event("update-monaco-editor", %{value: new_value})}
+    else
+      {:noreply, socket}
     end
   end
 

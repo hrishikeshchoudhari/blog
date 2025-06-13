@@ -15,7 +15,7 @@
 2. **Content Organization & Discovery**
    - [ ] Implement advanced tagging with auto-suggestions
    - [ ] Create a visual post archive with filtering
-   - [ ] Add full-text search with Elasticsearch/Meilisearch
+   - [ ] Add full-text search with Meilisearch and Cmd+K search
    - [ ] Implement related posts algorithm
    - [ ] Add reading time estimates
 

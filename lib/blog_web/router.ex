@@ -67,6 +67,7 @@ defmodule BlogWeb.Router do
       live "/admin/draft", WriteDraft
       live "/admin/post/:id/edit", EditContent, :edit_post, as: :edit_post
       live "/admin/draft/:id/edit", EditContent, :edit_draft, as: :edit_draft
+      live "/admin/media", MediaLibraryLive
       live "/upload", UploadLive
       live "/admin/tags", TagsActions
 

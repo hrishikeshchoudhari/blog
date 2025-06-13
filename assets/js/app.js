@@ -26,6 +26,19 @@ import { CodeEditorHook } from "../../deps/live_monaco_editor/priv/static/live_m
 let Hooks = {}
 Hooks.CodeEditorHook = CodeEditorHook
 
+// Hook to update Monaco editor programmatically
+Hooks.MonacoUpdater = {
+  mounted() {
+    this.handleEvent("update-monaco-editor", ({value}) => {
+      // Find the Monaco editor instance
+      const editorEl = document.querySelector("#body")
+      if (editorEl && editorEl._editorInstance) {
+        editorEl._editorInstance.setValue(value)
+      }
+    })
+  }
+}
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {hooks: Hooks, params: {_csrf_token: csrfToken}})
 
@@ -48,6 +61,12 @@ window.addEventListener("lme:editor_mounted", (ev) => {
 
     // https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneCodeEditor.html
     const editor = ev.detail.editor.standalone_code_editor
+    
+    // Store editor instance for programmatic updates
+    const editorEl = document.querySelector("#body")
+    if (editorEl) {
+        editorEl._editorInstance = editor
+    }
 
     // push an event to the parent liveview containing the editor current value when the editor loses focus
     editor.onDidBlurEditorWidget(() => {

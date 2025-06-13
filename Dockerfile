@@ -14,6 +14,7 @@ RUN apt-get update && \
     inotify-tools \
     nodejs \
     npm \
+    imagemagick \
     && rm -rf /var/lib/apt/lists/*
 
 # Add PostgreSQL 17 repository
