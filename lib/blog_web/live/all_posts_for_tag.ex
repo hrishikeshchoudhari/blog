@@ -4,25 +4,28 @@ defmodule BlogWeb.AllPostsForTag do
     require Logger
     alias Blog.Landing
     alias Blog.Admin.Tag
+    import BlogWeb.LiveHelpers
 
     def mount(params, _session, socket) do
       %{"tagslug" => tag_slug} = params
       posts = Landing.get_posts_by_tag_slug(tag_slug)
       tag = Blog.Repo.get_by(Tag, slug: tag_slug)
-      all_tags = Landing.all_tags()  # Add this for the sidebar
       
       page_title = if tag, do: "Posts tagged '#{tag.name}'", else: "Tag not found"
       
-      {:ok, assign(socket, 
-        posts: posts, 
-        tag: tag,
-        tags: all_tags,  # Add this
-        tag_slug: tag_slug,
-        active_nav: :writing, 
-        page_title: page_title,
-        feed_url: "/tag/#{tag_slug}/feed.xml",
-        feed_title: if(tag, do: "Posts tagged '#{tag.name}' - Blog Feed", else: "Tag Feed")
-      )}
+      {:ok, 
+        socket
+        |> assign_sidebar_data()
+        |> assign(
+          posts: posts, 
+          tag: tag,
+          tag_slug: tag_slug,
+          active_nav: :writing, 
+          page_title: page_title,
+          feed_url: "/tag/#{tag_slug}/feed.xml",
+          feed_title: if(tag, do: "Posts tagged '#{tag.name}' - Blog Feed", else: "Tag Feed")
+        )
+      }
     end
 
     def render(assigns) do

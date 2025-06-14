@@ -60,7 +60,9 @@ defmodule BlogWeb.EditContent do
         auto_save_enabled: type == "draft",
         auto_save_timer: nil,
         last_saved_at: nil,
-        save_status: :idle)
+        save_status: :idle,
+        show_preview: false,
+        preview_html: "")
     }
   end
 
@@ -151,6 +153,17 @@ defmodule BlogWeb.EditContent do
                     media_items={@media_items}
                     selected_media={@selected_media}
                   />
+                  <button 
+                    type="button"
+                    phx-click="toggle-preview"
+                    class={"text-sm font-medium flex items-center gap-1 " <> if(@show_preview, do: "text-sacramento-700", else: "text-sacramento-600 hover:text-sacramento-700")}
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <%= if @show_preview, do: "Hide Preview", else: "Preview" %>
+                  </button>
                   <button 
                     type="button"
                     phx-click="toggle-syntax-guide"
@@ -250,6 +263,44 @@ defmodule BlogWeb.EditContent do
                   )
                 }
               />
+              
+              <!-- Preview Modal -->
+              <%= if @show_preview do %>
+                <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <!-- Background overlay -->
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" phx-click="toggle-preview" aria-hidden="true"></div>
+
+                    <!-- Modal panel -->
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                    <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+                      <div>
+                        <div class="flex items-center justify-between mb-4">
+                          <h3 class="text-2xl font-bold text-neutral-900" id="modal-title">
+                            Preview
+                          </h3>
+                          <button type="button" phx-click="toggle-preview" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sacramento-500">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div class="mt-2 max-h-[70vh] overflow-y-auto">
+                          <div class="prose prose-lg max-w-none">
+                            <%= raw(@preview_html) %>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="mt-5 sm:mt-6">
+                        <button type="button" phx-click="toggle-preview" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-sacramento-600 text-base font-medium text-white hover:bg-sacramento-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sacramento-500 sm:text-sm">
+                          Close Preview
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
             </div>
           </div>
         </div>
@@ -365,6 +416,7 @@ defmodule BlogWeb.EditContent do
     socket = 
       socket
       |> assign(:editor_value, body)
+      |> update_preview_if_showing()
       |> schedule_auto_save()
     
     {:noreply, socket}
@@ -399,6 +451,15 @@ defmodule BlogWeb.EditContent do
 
   def handle_event("toggle-syntax-guide", _, socket) do
     {:noreply, assign(socket, :show_syntax_guide, !socket.assigns.show_syntax_guide)}
+  end
+
+  def handle_event("toggle-preview", _, socket) do
+    socket = 
+      socket
+      |> assign(:show_preview, !socket.assigns.show_preview)
+      |> update_preview_if_showing()
+    
+    {:noreply, socket}
   end
 
   def handle_event("update-content", params, socket) do
@@ -686,4 +747,22 @@ defmodule BlogWeb.EditContent do
       text <> "\n" <> table
     end
   end
+  
+  defp update_preview_if_showing(socket) do
+    if socket.assigns.show_preview && !socket.assigns.editing_html do
+      preview_html = generate_preview_html(socket.assigns.editor_value || "")
+      assign(socket, :preview_html, preview_html)
+    else
+      socket
+    end
+  end
+  
+  defp generate_preview_html(markdown_content) when is_binary(markdown_content) do
+    # The Md library returns HTML directly, not a tuple
+    # It follows standard markdown rules where single newlines are ignored
+    # and double newlines create paragraph breaks
+    Md.generate(markdown_content)
+  end
+  
+  defp generate_preview_html(_), do: ""
 end

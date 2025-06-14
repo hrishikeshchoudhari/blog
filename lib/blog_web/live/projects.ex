@@ -1,10 +1,14 @@
 defmodule BlogWeb.Projects do
   use BlogWeb, :live_view
   alias Blog.Landing
+  import BlogWeb.LiveHelpers
 
   def mount(_params, _session, socket) do
-    tags = Landing.all_tags()
-    {:ok, assign(socket, active_nav: :projects, tags: tags, page_title: "Projects")}
+    {:ok, 
+      socket
+      |> assign_sidebar_data()
+      |> assign(active_nav: :projects, page_title: "Projects")
+    }
   end
 
   def render(assigns) do

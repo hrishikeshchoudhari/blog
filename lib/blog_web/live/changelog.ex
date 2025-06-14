@@ -1,10 +1,14 @@
 defmodule BlogWeb.Changelog do
   use BlogWeb, :live_view
   alias Blog.Landing
+  import BlogWeb.LiveHelpers
 
   def mount(_params, _session, socket) do
-    tags = Landing.all_tags()
-    {:ok, assign(socket, active_nav: :changelog, tags: tags, page_title: "Changelog")}
+    {:ok, 
+      socket
+      |> assign_sidebar_data()
+      |> assign(active_nav: :changelog, page_title: "Changelog")
+    }
   end
 
   def render(assigns) do

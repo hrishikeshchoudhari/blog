@@ -2,11 +2,15 @@ defmodule BlogWeb.About do
     use BlogWeb, :live_view
     require Logger
     alias Blog.Landing
+    import BlogWeb.LiveHelpers
 
     def mount(_params, _session, socket) do
       page = Landing.get_page("about")
-      tags = Landing.all_tags()
-      {:ok, assign(socket, active_nav: :about, page: page, tags: tags, page_title: page.title || "About Me")}
+      {:ok, 
+        socket
+        |> assign_sidebar_data()
+        |> assign(active_nav: :about, page: page, page_title: page.title || "About Me")
+      }
     end
 
     def render(assigns) do

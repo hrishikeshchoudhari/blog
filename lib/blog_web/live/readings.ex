@@ -1,10 +1,14 @@
 defmodule BlogWeb.Readings do
   use BlogWeb, :live_view
   alias Blog.Landing
+  import BlogWeb.LiveHelpers
 
   def mount(_params, _session, socket) do
-    tags = Landing.all_tags()
-    {:ok, assign(socket, active_nav: :readings, tags: tags, page_title: "Readings")}
+    {:ok, 
+      socket
+      |> assign_sidebar_data()
+      |> assign(active_nav: :readings, page_title: "Readings")
+    }
   end
 
   def render(assigns) do
