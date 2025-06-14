@@ -1,0 +1,12 @@
+# Ignore actual backup files
+*.sql.gz
+*.sql
+
+# Ignore logs
+logs/*.log
+
+# Ignore rclone config (if placed here)
+rclone.conf
+
+# Keep directory structure
+!.gitkeep

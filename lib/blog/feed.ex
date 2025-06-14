@@ -179,11 +179,11 @@ defmodule Blog.Feed do
     |> Entry.author(feed_author(), email: feed_email())
     |> Entry.published(post.publishedDate)
     
-    # Add content
+    # Add content - sanitize for feed compatibility
     content = if post.meta_description do
-      "<p>#{html_escape(post.meta_description)}</p><hr/>" <> post.body
+      "<p>#{html_escape(post.meta_description)}</p><hr/>" <> sanitize_feed_content(post.body)
     else
-      post.body
+      sanitize_feed_content(post.body)
     end
     entry = Entry.content(entry, content, type: "html")
     
@@ -264,6 +264,25 @@ defmodule Blog.Feed do
     |> String.replace(">", "&gt;")
     |> String.replace("\"", "&quot;")
     |> String.replace("'", "&apos;")
+  end
+  
+  defp sanitize_feed_content(html) do
+    html
+    |> remove_iframes()
+    |> ensure_valid_entities()
+  end
+  
+  defp remove_iframes(html) do
+    # Remove iframe tags completely as they're not supported in feeds
+    html
+    |> String.replace(~r/<iframe[^>]*>.*?<\/iframe>/is, "[Embedded content removed for feed compatibility]")
+    |> String.replace(~r/<iframe[^>]*\/>/is, "[Embedded content removed for feed compatibility]")
+  end
+  
+  defp ensure_valid_entities(html) do
+    # Ensure proper HTML entity encoding
+    html
+    |> String.replace(~r/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/i, "&amp;")
   end
   
   defp generate_feed_xml(feed) do

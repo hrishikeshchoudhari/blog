@@ -6,7 +6,7 @@ defmodule BlogWeb.UsersLoginLive do
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
         Sign in to account
-        <:subtitle>
+        <:subtitle :if={@registration_enabled}>
           Don't have an account?
           <.link navigate={~p"/users/register"} class="font-semibold text-brand hover:underline">
             Sign up
@@ -38,6 +38,12 @@ defmodule BlogWeb.UsersLoginLive do
   def mount(_params, _session, socket) do
     email = live_flash(socket.assigns.flash, :email)
     form = to_form(%{"email" => email}, as: "users")
-    {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
+    
+    socket =
+      socket
+      |> assign(form: form)
+      |> assign(registration_enabled: Application.get_env(:blog, :registration_enabled, false))
+    
+    {:ok, socket, temporary_assigns: [form: form]}
   end
 end

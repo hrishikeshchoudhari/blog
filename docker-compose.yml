@@ -15,6 +15,8 @@ services:
     environment:
       - MIX_ENV=dev
       - DATABASE_URL=postgres://blog:blog_dev_password@localhost/blog_dev
+    env_file:
+      - .env
     stdin_open: true
     tty: true
     networks:

@@ -11,6 +11,10 @@ This is a Phoenix LiveView blog application built with Elixir. It features:
 - Markdown editor with live preview (Monaco editor)
 - Admin interface for content management
 
+## Deployment Target
+
+**IMPORTANT: This blog is deployed on Hetzner using Docker, NOT on Fly.io**
+
 ## Development Commands
 
 ### Docker Setup (Recommended)

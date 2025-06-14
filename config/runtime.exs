@@ -121,4 +121,7 @@ if config_env() == :prod do
     feed_author: System.get_env("FEED_AUTHOR") || "Blog Author",
     feed_email: System.get_env("FEED_EMAIL") || "author@#{host}",
     feed_limit: String.to_integer(System.get_env("FEED_LIMIT") || "20")
+  
+  # Disable registration in production
+  config :blog, :registration_enabled, System.get_env("ALLOW_REGISTRATION") == "true"
 end

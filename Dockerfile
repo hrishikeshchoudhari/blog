@@ -15,6 +15,7 @@ RUN apt-get update && \
     nodejs \
     npm \
     imagemagick \
+    rclone \
     && rm -rf /var/lib/apt/lists/*
 
 # Add PostgreSQL 17 repository

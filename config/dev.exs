@@ -72,6 +72,9 @@ config :blog, BlogWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :blog, dev_routes: true
 
+# Enable registration in development
+config :blog, :registration_enabled, true
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 
@@ -87,3 +90,8 @@ config :phoenix_live_view, :debug_heex_annotations, true
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Import local configuration if it exists
+if File.exists?("config/dev.local.exs") do
+  import_config "dev.local.exs"
+end

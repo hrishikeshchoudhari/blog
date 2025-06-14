@@ -24,7 +24,11 @@
       "WebFetch(domain:posthog.com)",
       "Bash(claude --version)",
       "Bash(claude --update-check)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "WebFetch(domain:hex.pm)",
+      "Bash(mkdir:*)",
+      "Bash(./backups/scripts/run_backup.sh:*)",
+      "Bash(./backups/scripts/setup_cron.sh:*)"
     ],
     "deny": []
   }

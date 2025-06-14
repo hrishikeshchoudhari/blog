@@ -11,6 +11,13 @@ defmodule Blog.Accounts do
   ## Database getters
 
   @doc """
+  Checks if any users exist in the system.
+  """
+  def has_any_users? do
+    Repo.exists?(Users)
+  end
+
+  @doc """
   Gets a users by email.
 
   ## Examples

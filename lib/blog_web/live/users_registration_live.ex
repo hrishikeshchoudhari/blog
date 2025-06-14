@@ -43,14 +43,30 @@ defmodule BlogWeb.UsersRegistrationLive do
   end
 
   def mount(_params, _session, socket) do
-    changeset = Accounts.change_users_registration(%Users{})
+    # Check if registration is enabled and no users exist
+    cond do
+      not Application.get_env(:blog, :registration_enabled, false) ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Registration is currently disabled")
+         |> redirect(to: ~p"/users/log_in")}
+      
+      Accounts.has_any_users?() ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Registration is closed. Only one user account is allowed.")
+         |> redirect(to: ~p"/users/log_in")}
+      
+      true ->
+        changeset = Accounts.change_users_registration(%Users{})
 
-    socket =
-      socket
-      |> assign(trigger_submit: false, check_errors: false)
-      |> assign_form(changeset)
+        socket =
+          socket
+          |> assign(trigger_submit: false, check_errors: false)
+          |> assign_form(changeset)
 
-    {:ok, socket, temporary_assigns: [form: nil]}
+        {:ok, socket, temporary_assigns: [form: nil]}
+    end
   end
 
   def handle_event("save", %{"users" => users_params}, socket) do

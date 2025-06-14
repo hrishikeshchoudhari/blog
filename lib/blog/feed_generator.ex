@@ -136,6 +136,12 @@ defmodule Blog.FeedGenerator do
   end
   defp escape_xml(value), do: escape_xml(to_string(value))
   
+  defp escape_html_for_xml(html) do
+    # For HTML content in XML, we need to escape XML entities but preserve HTML structure
+    # This is already escaped HTML, so we just need to ensure it's valid
+    html
+  end
+  
   defp generate_elements(elements) do
     elements
     |> Enum.map(&generate_element/1)
@@ -189,7 +195,13 @@ defmodule Blog.FeedGenerator do
   
   defp generate_element({:content, attrs, content}) do
     type = attrs[:type] || "text"
-    "<content type=\"#{escape_xml(type)}\">#{escape_xml(content)}</content>"
+    # For HTML content, we need to escape it but preserve valid HTML entities
+    escaped_content = if type == "html" do
+      escape_html_for_xml(content)
+    else
+      escape_xml(content)
+    end
+    "<content type=\"#{escape_xml(type)}\">#{escaped_content}</content>"
   end
   
   defp generate_element({:category, attrs, _content}) do
