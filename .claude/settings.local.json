@@ -16,7 +16,15 @@
       "Bash(docker exec:*)",
       "Bash(rg:*)",
       "Bash(find:*)",
-      "WebFetch(domain:hexdocs.pm)"
+      "WebFetch(domain:hexdocs.pm)",
+      "WebFetch(domain:github.com)",
+      "Bash(mix deps.get:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp list)",
+      "WebFetch(domain:posthog.com)",
+      "Bash(claude --version)",
+      "Bash(claude --update-check)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

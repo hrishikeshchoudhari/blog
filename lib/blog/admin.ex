@@ -3,7 +3,7 @@ defmodule Blog.Admin do
   The Admin context
   """
   import Ecto.Query, warn: false
-  alias Blog.Admin.{Draft, Tag}
+  alias Blog.Admin.{Draft, Tag, DraftRevision}
   alias Blog.Post
   alias Blog.Repo
   require Md
@@ -188,5 +188,240 @@ defmodule Blog.Admin do
     {:ok, Repo.preload(updated_draft, :tags, force: true)}
   end
 
+  # Categories
+  
+  alias Blog.Admin.{Category, Series}
+  
+  def list_categories do
+    Category
+    |> order_by([c], [c.position, c.name])
+    |> Repo.all()
+    |> Repo.preload(:parent)
+  end
+  
+  def get_category!(id) do
+    Category
+    |> Repo.get!(id)
+    |> Repo.preload([:parent, :children])
+  end
+  
+  def create_category(attrs \\ %{}) do
+    %Category{}
+    |> Category.changeset(attrs)
+    |> Repo.insert()
+  end
+  
+  def update_category(%Category{} = category, attrs) do
+    category
+    |> Category.changeset(attrs)
+    |> Repo.update()
+  end
+  
+  def delete_category(%Category{} = category) do
+    Repo.delete(category)
+  end
+  
+  # Series
+  
+  def list_series(user_id) do
+    Series
+    |> where([s], s.user_id == ^user_id)
+    |> order_by([s], desc: s.inserted_at)
+    |> Repo.all()
+  end
+  
+  def get_series!(id) do
+    Series
+    |> Repo.get!(id)
+    |> Repo.preload(posts: from(p in Post, order_by: p.series_position))
+  end
+  
+  def create_series(attrs \\ %{}) do
+    %Series{}
+    |> Series.changeset(attrs)
+    |> Repo.insert()
+  end
+  
+  def update_series(%Series{} = series, attrs) do
+    series
+    |> Series.changeset(attrs)
+    |> Repo.update()
+  end
+  
+  def delete_series(%Series{} = series) do
+    Repo.delete(series)
+  end
+  
+  # Featured posts
+  
+  def list_featured_posts(limit \\ 5) do
+    Post
+    |> where([p], p.is_featured == true)
+    |> order_by([p], desc: p.featured_at)
+    |> limit(^limit)
+    |> preload(:tags)
+    |> Repo.all()
+  end
+  
+  def toggle_featured(%Post{} = post) do
+    update_post(post, %{"is_featured" => !post.is_featured})
+  end
+
+  # Auto-save functionality
+  
+  def auto_save_draft(draft_id, draft_params, user_id) do
+    draft = get_draft!(draft_id)
+    
+    # Start a transaction to update draft and create revision
+    Repo.transaction(fn ->
+      # Create a revision for history
+      revision_attrs = Map.merge(draft_params, %{
+        "draft_id" => draft_id,
+        "user_id" => user_id,
+        "auto_saved" => true,
+        "revision_note" => "Auto-saved"
+      })
+      
+      case %DraftRevision{}
+           |> DraftRevision.changeset(revision_attrs)
+           |> Repo.insert() do
+        {:ok, _revision} ->
+          # Update the draft with new content and increment revision count
+          update_attrs = Map.merge(draft_params, %{
+            "last_auto_save_at" => DateTime.utc_now(),
+            "revision_count" => draft.revision_count + 1
+          })
+          
+          case update_draft(draft, update_attrs) do
+            {:ok, updated_draft} -> updated_draft
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+          
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+  end
+  
+  def create_draft_with_auto_save(draft_params, user_id) do
+    # Start a transaction to create draft and initial revision
+    Repo.transaction(fn ->
+      # Add auto-save timestamp
+      draft_params = Map.merge(draft_params, %{
+        "last_auto_save_at" => DateTime.utc_now(),
+        "revision_count" => 1
+      })
+      
+      # Create the draft
+      case save_draft(draft_params) do
+        %Draft{} = draft ->
+          # Create initial revision
+          revision_attrs = Map.merge(draft_params, %{
+            "draft_id" => draft.id,
+            "user_id" => user_id,
+            "auto_saved" => true,
+            "revision_note" => "Initial auto-save"
+          })
+          
+          case %DraftRevision{}
+               |> DraftRevision.changeset(revision_attrs)
+               |> Repo.insert() do
+            {:ok, _revision} -> draft
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+          
+        error ->
+          Repo.rollback(error)
+      end
+    end)
+  end
+  
+  def list_draft_revisions(draft_id, limit \\ 20) do
+    DraftRevision
+    |> where([r], r.draft_id == ^draft_id)
+    |> order_by([r], desc: r.inserted_at)
+    |> limit(^limit)
+    |> preload(:user)
+    |> Repo.all()
+  end
+  
+  def get_draft_revision!(id) do
+    DraftRevision
+    |> Repo.get!(id)
+    |> Repo.preload(:user)
+  end
+  
+  def restore_draft_from_revision(draft_id, revision_id, user_id) do
+    revision = get_draft_revision!(revision_id)
+    
+    if revision.draft_id == draft_id do
+      draft = get_draft!(draft_id)
+      
+      # Create a new revision for the current state before restoring
+      backup_attrs = %{
+        "draft_id" => draft_id,
+        "user_id" => user_id,
+        "title" => draft.title,
+        "body" => draft.body,
+        "raw_body" => draft.raw_body,
+        "slug" => draft.slug,
+        "publishedDate" => draft.publishedDate,
+        "meta_description" => draft.meta_description,
+        "meta_keywords" => draft.meta_keywords,
+        "og_title" => draft.og_title,
+        "og_description" => draft.og_description,
+        "og_image" => draft.og_image,
+        "twitter_card_type" => draft.twitter_card_type,
+        "canonical_url" => draft.canonical_url,
+        "seo_data" => draft.seo_data,
+        "is_featured" => draft.is_featured,
+        "category_id" => draft.category_id,
+        "series_id" => draft.series_id,
+        "series_position" => draft.series_position,
+        "revision_note" => "Before restoring from revision ##{revision.id}",
+        "auto_saved" => false
+      }
+      
+      Repo.transaction(fn ->
+        # Save current state as a revision
+        case %DraftRevision{}
+             |> DraftRevision.changeset(backup_attrs)
+             |> Repo.insert() do
+          {:ok, _backup} ->
+            # Restore from the selected revision
+            restore_attrs = %{
+              "title" => revision.title,
+              "body" => revision.body,
+              "raw_body" => revision.raw_body,
+              "slug" => revision.slug,
+              "publishedDate" => revision.publishedDate,
+              "meta_description" => revision.meta_description,
+              "meta_keywords" => revision.meta_keywords,
+              "og_title" => revision.og_title,
+              "og_description" => revision.og_description,
+              "og_image" => revision.og_image,
+              "twitter_card_type" => revision.twitter_card_type,
+              "canonical_url" => revision.canonical_url,
+              "seo_data" => revision.seo_data,
+              "is_featured" => revision.is_featured,
+              "category_id" => revision.category_id,
+              "series_id" => revision.series_id,
+              "series_position" => revision.series_position,
+              "revision_count" => draft.revision_count + 1
+            }
+            
+            case update_draft(draft, restore_attrs) do
+              {:ok, updated_draft} -> updated_draft
+              {:error, changeset} -> Repo.rollback(changeset)
+            end
+            
+          {:error, changeset} ->
+            Repo.rollback(changeset)
+        end
+      end)
+    else
+      {:error, :unauthorized}
+    end
+  end
 
 end

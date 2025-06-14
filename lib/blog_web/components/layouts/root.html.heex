@@ -5,6 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
 
+    <%= if assigns[:meta_description] do %>
+      <meta name="description" content={@meta_description} />
+    <% end %>
+    
+    <%= if assigns[:meta_keywords] do %>
+      <meta name="keywords" content={@meta_keywords} />
+    <% end %>
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:site_name" content="Rishi's Blog" />
+    <meta property="og:type" content={assigns[:og_type] || "website"} />
+    <meta property="og:title" content={assigns[:og_title] || assigns[:page_title] || "Rishi's Blog"} />
+    <%= if assigns[:og_description] do %>
+      <meta property="og:description" content={@og_description} />
+    <% end %>
+    <%= if assigns[:og_image] do %>
+      <meta property="og:image" content={@og_image} />
+    <% end %>
+    <%= if assigns[:canonical_url] do %>
+      <meta property="og:url" content={@canonical_url} />
+      <link rel="canonical" href={@canonical_url} />
+    <% end %>
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content={assigns[:twitter_card_type] || "summary"} />
+    <%= if assigns[:og_title] || assigns[:page_title] do %>
+      <meta name="twitter:title" content={assigns[:og_title] || assigns[:page_title]} />
+    <% end %>
+    <%= if assigns[:og_description] || assigns[:meta_description] do %>
+      <meta name="twitter:description" content={assigns[:og_description] || assigns[:meta_description]} />
+    <% end %>
+    <%= if assigns[:og_image] do %>
+      <meta name="twitter:image" content={@og_image} />
+    <% end %>
+
     <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
@@ -19,6 +54,25 @@
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
+    
+    <%= unless assigns[:skip_website_schema] do %>
+      <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Rishi's Blog",
+          "url": "<%= BlogWeb.Endpoint.url() %>",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "<%= BlogWeb.Endpoint.url() %>/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      </script>
+    <% end %>
   </head>
   <body class= "bg-chiffon-50 antialiased font-snpro">
     <ul id="user_session_corner" class="font-snpro fixed bottom-0 left-0 z-50 flex items-center gap-4 px-4 py-2 sm:px-6 lg:px-8 bg-white bg-opacity-25 text-opacity-50 border-t border-gray-200 shadow">

@@ -23,6 +23,11 @@ defmodule BlogWeb.Endpoint do
     gzip: false,
     only: BlogWeb.static_paths()
 
+  # Add Tidewave for development AI integration
+  if Code.ensure_loaded?(Tidewave) do
+    plug Tidewave
+  end
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do

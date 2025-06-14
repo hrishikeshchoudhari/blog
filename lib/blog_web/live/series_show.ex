@@ -1,0 +1,140 @@
+defmodule BlogWeb.SeriesShow do
+  use BlogWeb, :live_view
+  alias Blog.Landing
+  import BlogWeb.LiveHelpers
+  
+  def mount(%{"slug" => slug}, _session, socket) do
+    case Landing.get_series_by_slug(slug) do
+      nil ->
+        {:ok, push_navigate(socket, to: "/series")}
+        
+      series ->
+        socket =
+          socket
+          |> assign_sidebar_data()
+          |> assign(
+            current_series_data: series,  # Changed from series to current_series_data
+            active_nav: :writing,
+            page_title: series.title,
+            current_series: series
+          )
+        
+        {:ok, socket}
+    end
+  end
+  
+  def render(assigns) do
+    ~H"""
+    <div class="series-show">
+      <!-- Series Header -->
+      <div class="mb-12 pb-8 border-b border-gray-200">
+        <h1 class="text-5xl font-bold mb-4 text-neutral-850 font-snpro tracking-tight">
+          <%= @current_series_data.title %>
+        </h1>
+        <p class="text-xl text-gray-700 mb-6"><%= @current_series_data.description %></p>
+        
+        <div class="flex flex-wrap items-center gap-6 text-sm text-gray-600">
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <%= length(@current_series_data.posts) %> posts in this series
+          </span>
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <%= calculate_series_reading_time(@current_series_data.posts) %> min total reading time
+          </span>
+        </div>
+      </div>
+      
+      <!-- Series Posts -->
+      <div class="space-y-8">
+        <%= for {post, index} <- Enum.with_index(@current_series_data.posts) do %>
+          <article class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 relative">
+            <!-- Part Number Badge -->
+            <div class="absolute -top-3 -left-3 bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold">
+              <%= index + 1 %>
+            </div>
+            
+            <div class="ml-6">
+              <h2 class="text-2xl font-bold mb-3 font-snpro tracking-tight">
+                <.link navigate={"/post/" <> post.slug} class="hover:text-orange-600 transition-colors">
+                  <%= post.title %>
+                </.link>
+              </h2>
+              
+              <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                <%= if post.category do %>
+                  <.link navigate={"/category/" <> post.category.slug} class="text-orange-600 hover:text-orange-700">
+                    <%= post.category.name %>
+                  </.link>
+                <% end %>
+                <span><%= Calendar.strftime(post.publishedDate, "%B %d, %Y") %></span>
+                <span><%= estimate_reading_time(post.body) %> min read</span>
+              </div>
+              
+              <%= if post.meta_description do %>
+                <p class="text-gray-700 mb-4"><%= post.meta_description %></p>
+              <% end %>
+              
+              <%= if post.tags != [] do %>
+                <div class="flex flex-wrap gap-2">
+                  <%= for tag <- post.tags do %>
+                    <.link 
+                      navigate={"/tag/" <> tag.slug} 
+                      class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-300"
+                    >
+                      #<%= tag.name %>
+                    </.link>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+      </div>
+      
+      <!-- Series Navigation -->
+      <div class="mt-12 pt-8 border-t border-gray-200">
+        <div class="flex justify-between items-center">
+          <.link navigate="/series" class="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to all series
+          </.link>
+          
+          <%= if length(@current_series_data.posts) > 0 do %>
+            <.link 
+              navigate={"/post/" <> hd(@current_series_data.posts).slug} 
+              class="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium"
+            >
+              Start reading from Part 1
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </.link>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    """
+  end
+  
+  defp calculate_series_reading_time(posts) do
+    posts
+    |> Enum.map(&estimate_reading_time(&1.body))
+    |> Enum.sum()
+  end
+  
+  defp estimate_reading_time(content) do
+    plain_text = content 
+      |> String.replace(~r/<[^>]*>/, " ")
+      |> String.replace(~r/\s+/, " ")
+    
+    word_count = plain_text |> String.split() |> length()
+    max(1, div(word_count, 200))
+  end
+end

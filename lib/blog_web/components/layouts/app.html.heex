@@ -37,27 +37,126 @@
 
   <div class="flex flex-1 pt-16">    
     <!-- Improved Sidebar -->
-    <aside class="hidden lg:block lg:w-64 fixed left-0 top-0 h-screen pt-24 bg-gradient-to-b from-lava to-orange-700 text-chiffon-50">
+    <aside class="hidden lg:block lg:w-64 fixed left-0 top-0 h-screen pt-24 bg-gradient-to-b from-lava to-orange-700 text-chiffon-50 overflow-y-auto">
       <div class="py-4">
-        <h3 class="text-lg font-bold mb-4 text-chiffon-100 uppercase tracking-wider px-6">Tags</h3>
-        <ul class="space-y-2">
-          <%= for tag <- @tags do %>
-          <li>
-            <.link 
-              navigate={"/tag/" <> tag.slug} 
-              class={"block pl-9 pr-6 py-2 transition-colors duration-200 " <>
-                if assigns[:tag] && assigns[:tag].slug == tag.slug do
-                  "bg-orange-900/60 text-white font-semibold rounded-l-lg ml-6"
-                else
-                  "hover:bg-orange-600/50 hover:text-white rounded-l-lg ml-6"
-                end
-              }
-            >
-              #<%= tag.name %>
-            </.link>
-          </li>
-          <% end %>
-        </ul>
+        <!-- Categories Section -->
+        <details class="group mb-6" open>
+          <summary class="px-6 py-2 cursor-pointer flex justify-between items-center hover:bg-orange-600/30 text-lg font-bold text-chiffon-100 uppercase tracking-wider">
+            Categories
+            <svg class="w-5 h-5 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div class="mt-2">
+            <%= if assigns[:categories] && @categories != [] do %>
+              <ul class="space-y-1">
+                <%= for category <- @categories do %>
+                  <li>
+                    <.link 
+                      navigate={"/category/" <> category.slug} 
+                      class={"block pl-9 pr-6 py-2 transition-colors duration-200 " <>
+                        if assigns[:current_category] && assigns[:current_category].slug == category.slug do
+                          "bg-orange-900/60 text-white font-semibold rounded-l-lg ml-6"
+                        else
+                          "hover:bg-orange-600/50 hover:text-white rounded-l-lg ml-6"
+                        end
+                      }
+                    >
+                      <%= category.name %>
+                    </.link>
+                    <%= if category.children != [] do %>
+                      <ul class="ml-4 mt-1 space-y-1">
+                        <%= for child <- category.children do %>
+                          <li>
+                            <.link 
+                              navigate={"/category/" <> child.slug} 
+                              class={"block pl-9 pr-6 py-1 text-sm transition-colors duration-200 " <>
+                                if assigns[:current_category] && assigns[:current_category].slug == child.slug do
+                                  "bg-orange-900/60 text-white font-semibold rounded-l-lg ml-6"
+                                else
+                                  "hover:bg-orange-600/50 hover:text-white rounded-l-lg ml-6 opacity-90"
+                                end
+                              }
+                            >
+                              └ <%= child.name %>
+                            </.link>
+                          </li>
+                        <% end %>
+                      </ul>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="px-6 text-sm text-chiffon-200">No categories yet</p>
+            <% end %>
+          </div>
+        </details>
+        
+        <!-- Tags Section -->
+        <details class="group mb-6">
+          <summary class="px-6 py-2 cursor-pointer flex justify-between items-center hover:bg-orange-600/30 text-lg font-bold text-chiffon-100 uppercase tracking-wider">
+            Tags
+            <svg class="w-5 h-5 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div class="mt-2">
+            <ul class="space-y-2">
+              <%= for tag <- @tags do %>
+              <li>
+                <.link 
+                  navigate={"/tag/" <> tag.slug} 
+                  class={"block pl-9 pr-6 py-2 transition-colors duration-200 " <>
+                    if assigns[:tag] && assigns[:tag].slug == tag.slug do
+                      "bg-orange-900/60 text-white font-semibold rounded-l-lg ml-6"
+                    else
+                      "hover:bg-orange-600/50 hover:text-white rounded-l-lg ml-6"
+                    end
+                  }
+                >
+                  #<%= tag.name %>
+                </.link>
+              </li>
+              <% end %>
+            </ul>
+          </div>
+        </details>
+        
+        <!-- Series Section -->
+        <details class="group mb-6">
+          <summary class="px-6 py-2 cursor-pointer flex justify-between items-center hover:bg-orange-600/30 text-lg font-bold text-chiffon-100 uppercase tracking-wider">
+            Series
+            <svg class="w-5 h-5 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div class="mt-2">
+            <%= if assigns[:series] && @series != [] do %>
+              <ul class="space-y-2">
+                <%= for s <- @series do %>
+                  <li>
+                    <.link 
+                      navigate={"/series/" <> s.slug} 
+                      class={"block pl-9 pr-6 py-2 transition-colors duration-200 " <>
+                        if assigns[:current_series] && assigns[:current_series].slug == s.slug do
+                          "bg-orange-900/60 text-white font-semibold rounded-l-lg ml-6"
+                        else
+                          "hover:bg-orange-600/50 hover:text-white rounded-l-lg ml-6"
+                        end
+                      }
+                    >
+                      <%= s.title %>
+                      <span class="text-xs opacity-75">(<%= length(s.posts) %>)</span>
+                    </.link>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="px-6 text-sm text-chiffon-200">No series yet</p>
+            <% end %>
+          </div>
+        </details>
       </div>
     </aside>
 

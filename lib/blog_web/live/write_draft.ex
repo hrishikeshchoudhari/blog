@@ -7,6 +7,7 @@ defmodule BlogWeb.WriteDraft do
     alias Blog.Admin.Draft
     alias Blog.Media
     import BlogWeb.Components.MediaPicker
+    import BlogWeb.Components.MarkdownToolbar
 
     def mount(_params, _session, socket) do
       changeset = Admin.Draft.changeset(%Draft{}, %{})
@@ -16,30 +17,86 @@ defmodule BlogWeb.WriteDraft do
       user = socket.assigns.current_users
       media_items = Media.list_media_items(user.id)
       
+      # Load categories and series
+      categories = Admin.list_categories()
+      category_options = build_category_options(categories)
+      series = Admin.list_series(user.id)
+      series_options = Enum.map(series, fn s -> {s.title, s.id} end)
+      
       {:ok,
-        assign(socket,
+        socket
+        |> assign(
           active_admin_nav: :new_post,
           page_title: "Write Draft",
           form: to_form(changeset),
           tags: tags,
           tag_options: tag_options,
           selected_tag_ids: [],
+          categories: categories,
+          category_options: category_options,
+          series: series,
+          series_options: series_options,
           show_syntax_guide: false,
           editor_value: "",
           show_media_picker: false,
           media_items: media_items,
           selected_media: nil,
-          media_size: "medium")
+          media_size: "medium",
+          draft_id: nil,
+          auto_save_enabled: true,
+          auto_save_timer: nil,
+          last_saved_at: nil,
+          save_status: :idle
+        )
+        |> push_event("init_auto_save", %{})
       }
     end
 
     def render(assigns) do
         ~H"""
-        <div class="max-w-6xl mx-auto" id="write-draft-container" phx-hook="MonacoUpdater">
+        <div class="max-w-6xl mx-auto" id="write-draft-container">
           <!-- Page Header -->
           <div class="mb-6">
-            <h1 class="text-3xl font-bold text-neutral-850">New Post</h1>
-            <p class="mt-2 text-neutral-600">Create a new blog post or save it as a draft.</p>
+            <div class="flex items-center justify-between">
+              <div>
+                <h1 class="text-3xl font-bold text-neutral-850">New Post</h1>
+                <p class="mt-2 text-neutral-600">Create a new blog post or save it as a draft.</p>
+              </div>
+              
+              <!-- Auto-save Status -->
+              <div class="text-sm">
+                <%= case @save_status do %>
+                  <% :saving -> %>
+                    <span class="text-amber-600 flex items-center gap-2">
+                      <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  <% :saved -> %>
+                    <span class="text-green-600 flex items-center gap-2">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Saved
+                      <%= if @last_saved_at do %>
+                        <span class="text-neutral-500">
+                          <%= Calendar.strftime(@last_saved_at, "%I:%M %p") %>
+                        </span>
+                      <% end %>
+                    </span>
+                  <% :error -> %>
+                    <span class="text-red-600">Auto-save failed</span>
+                  <% _ -> %>
+                    <%= if @auto_save_enabled do %>
+                      <span class="text-neutral-500">Auto-save enabled</span>
+                    <% else %>
+                      <span class="text-neutral-400">Auto-save disabled</span>
+                    <% end %>
+                <% end %>
+              </div>
+            </div>
           </div>
 
           <.form for={@form} phx-submit="save-draft" phx-change="validate" class="space-y-6">
@@ -128,9 +185,11 @@ defmodule BlogWeb.WriteDraft do
                 <% end %>
                 
                 <div class="border border-neutral-200 rounded-lg overflow-hidden">
+                  <.markdown_toolbar />
                   <LiveMonacoEditor.code_editor 
                     style="min-height: 500px" 
-                    id="body" 
+                    path="draft_body"
+                    value={@editor_value}
                     class="w-full" 
                     change="set_editor_value" 
                     phx-debounce="1000"
@@ -188,6 +247,39 @@ defmodule BlogWeb.WriteDraft do
                 </div>
               </div>
 
+              <!-- Category and Series -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <!-- Category -->
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-2">
+                    Category
+                  </label>
+                  <.input 
+                    id="category_id" 
+                    field={@form[:category_id]} 
+                    type="select" 
+                    options={[{"None", nil} | @category_options]}
+                    class="w-full"
+                  />
+                  <p class="mt-1 text-sm text-neutral-500">Main category for this post</p>
+                </div>
+
+                <!-- Series -->
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-2">
+                    Series
+                  </label>
+                  <.input 
+                    id="series_id" 
+                    field={@form[:series_id]} 
+                    type="select" 
+                    options={[{"None", nil} | @series_options]}
+                    class="w-full"
+                  />
+                  <p class="mt-1 text-sm text-neutral-500">Part of a series?</p>
+                </div>
+              </div>
+
               <!-- Tags -->
               <div class="mt-6">
                 <label class="block text-sm font-medium text-neutral-700 mb-2">
@@ -204,6 +296,153 @@ defmodule BlogWeb.WriteDraft do
                   class="w-full"
                 />
                 <p class="mt-1 text-sm text-neutral-500">Select one or more tags for this post</p>
+              </div>
+              
+              <!-- Featured Post -->
+              <div class="mt-6">
+                <label class="flex items-center">
+                  <.input 
+                    id="is_featured" 
+                    field={@form[:is_featured]} 
+                    type="checkbox"
+                    class="mr-2"
+                  />
+                  <span class="text-sm font-medium text-neutral-700">Feature this post</span>
+                </label>
+                <p class="mt-1 text-sm text-neutral-500 ml-6">Featured posts appear prominently on the homepage</p>
+              </div>
+            </div>
+
+            <!-- SEO Section -->
+            <div class="bg-white rounded-lg shadow-sm p-6 border-2 border-chiffon-200">
+              <h2 class="text-lg font-semibold text-neutral-850 mb-4">SEO & Social Media</h2>
+              
+              <!-- Meta Description -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-neutral-700 mb-2">
+                  Meta Description
+                </label>
+                <.input 
+                  id="meta_description" 
+                  field={@form[:meta_description]} 
+                  type="textarea" 
+                  rows="2"
+                  placeholder="Brief description for search engines (max 160 characters)"
+                  class="w-full"
+                />
+                <p class="mt-1 text-sm text-neutral-500">
+                  <%= if @form[:meta_description].value do %>
+                    <%= String.length(@form[:meta_description].value || "") %>/160 characters
+                  <% else %>
+                    0/160 characters
+                  <% end %>
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Meta Keywords -->
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-2">
+                    Meta Keywords
+                  </label>
+                  <.input 
+                    id="meta_keywords" 
+                    field={@form[:meta_keywords]} 
+                    type="text" 
+                    placeholder="keyword1, keyword2, keyword3"
+                    class="w-full"
+                  />
+                  <p class="mt-1 text-sm text-neutral-500">Comma-separated keywords</p>
+                </div>
+
+                <!-- Twitter Card Type -->
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-2">
+                    Twitter Card Type
+                  </label>
+                  <.input 
+                    id="twitter_card_type" 
+                    field={@form[:twitter_card_type]} 
+                    type="select"
+                    options={[
+                      {"Summary", "summary"},
+                      {"Summary with Large Image", "summary_large_image"},
+                      {"App", "app"},
+                      {"Player", "player"}
+                    ]}
+                    class="w-full"
+                  />
+                </div>
+              </div>
+
+              <!-- Open Graph Title -->
+              <div class="mt-6">
+                <label class="block text-sm font-medium text-neutral-700 mb-2">
+                  Open Graph Title
+                </label>
+                <.input 
+                  id="og_title" 
+                  field={@form[:og_title]} 
+                  type="text" 
+                  placeholder="Leave blank to use post title"
+                  class="w-full"
+                />
+                <p class="mt-1 text-sm text-neutral-500">Title for social media sharing</p>
+              </div>
+
+              <!-- Open Graph Description -->
+              <div class="mt-6">
+                <label class="block text-sm font-medium text-neutral-700 mb-2">
+                  Open Graph Description
+                </label>
+                <.input 
+                  id="og_description" 
+                  field={@form[:og_description]} 
+                  type="textarea" 
+                  rows="2"
+                  placeholder="Leave blank to use meta description"
+                  class="w-full"
+                />
+                <p class="mt-1 text-sm text-neutral-500">Description for social media sharing</p>
+              </div>
+
+              <!-- Open Graph Image -->
+              <div class="mt-6">
+                <label class="block text-sm font-medium text-neutral-700 mb-2">
+                  Open Graph Image
+                </label>
+                <div class="flex gap-2">
+                  <.input 
+                    id="og_image" 
+                    field={@form[:og_image]} 
+                    type="text" 
+                    placeholder="URL to image for social sharing"
+                    class="flex-1"
+                  />
+                  <button
+                    type="button"
+                    phx-click="select-og-image"
+                    class="px-3 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-chiffon-100"
+                  >
+                    Choose from Media
+                  </button>
+                </div>
+                <p class="mt-1 text-sm text-neutral-500">Recommended size: 1200x630 pixels</p>
+              </div>
+
+              <!-- Canonical URL -->
+              <div class="mt-6">
+                <label class="block text-sm font-medium text-neutral-700 mb-2">
+                  Canonical URL
+                </label>
+                <.input 
+                  id="canonical_url" 
+                  field={@form[:canonical_url]} 
+                  type="text" 
+                  placeholder="Leave blank to auto-generate"
+                  class="w-full"
+                />
+                <p class="mt-1 text-sm text-neutral-500">The preferred URL for this content</p>
               </div>
             </div>
 
@@ -252,7 +491,12 @@ defmodule BlogWeb.WriteDraft do
     end
 
     def handle_event("set_editor_value", %{"value" => body}, socket) do
-      {:noreply, assign(socket, :editor_value, body)}
+      socket = 
+        socket
+        |> assign(:editor_value, body)
+        |> schedule_auto_save()
+      
+      {:noreply, socket}
     end
 
 
@@ -332,7 +576,7 @@ defmodule BlogWeb.WriteDraft do
          |> assign(editor_value: new_value)
          |> assign(show_media_picker: false)
          |> assign(selected_media: nil)
-         |> push_event("update-monaco-editor", %{value: new_value})}
+         |> LiveMonacoEditor.set_value(new_value, to: "draft_body")}
       else
         {:noreply, socket}
       end
@@ -351,7 +595,20 @@ defmodule BlogWeb.WriteDraft do
         "body" => Map.get(socket.assigns, :editor_value, ""),
         "slug" => Map.get(draft_params, "slug", ""),
         "publishedDate" => Map.get(draft_params, "publishedDate", ""),
-        "tag_ids" => tag_ids
+        "tag_ids" => tag_ids,
+        # SEO fields
+        "meta_description" => Map.get(draft_params, "meta_description", ""),
+        "meta_keywords" => Map.get(draft_params, "meta_keywords", ""),
+        "og_title" => Map.get(draft_params, "og_title", ""),
+        "og_description" => Map.get(draft_params, "og_description", ""),
+        "og_image" => Map.get(draft_params, "og_image", ""),
+        "twitter_card_type" => Map.get(draft_params, "twitter_card_type", "summary_large_image"),
+        "canonical_url" => Map.get(draft_params, "canonical_url", ""),
+        # Content organization fields
+        "category_id" => Map.get(draft_params, "category_id"),
+        "series_id" => Map.get(draft_params, "series_id"),
+        "series_position" => Map.get(draft_params, "series_position"),
+        "is_featured" => Map.get(draft_params, "is_featured", "false") == "true"
       }
 
       # First validate the changeset
@@ -381,9 +638,186 @@ defmodule BlogWeb.WriteDraft do
     end
 
 
-    # plan the route's layout properly
-    # sidebar
-    # draft section - title, body, tags, etc
-    # save draft btn, publish btn
-    #
+    # Markdown toolbar event handler
+    def handle_event("format-text", %{"format" => format}, socket) do
+      # Get current editor value and cursor position
+      current_value = socket.assigns.editor_value || ""
+      
+      # Apply formatting based on the format type
+      formatted_value = case format do
+        "bold" -> apply_inline_format(current_value, "**", "**")
+        "italic" -> apply_inline_format(current_value, "_", "_")
+        "strikethrough" -> apply_inline_format(current_value, "~", "~")
+        "code" -> apply_inline_format(current_value, "`", "`")
+        "heading" -> apply_line_prefix(current_value, "## ")
+        "link" -> apply_link_format(current_value)
+        "quote" -> apply_line_prefix(current_value, "> ")
+        "unordered-list" -> apply_line_prefix(current_value, "- ")
+        "ordered-list" -> apply_line_prefix(current_value, "1. ")
+        "hr" -> current_value <> "\n\n---\n\n"
+        "codeblock" -> apply_block_format(current_value, "```\n", "\n```")
+        "table" -> apply_table_template(current_value)
+        _ -> current_value
+      end
+      
+      # Update the editor with the formatted value
+      {:noreply,
+       socket
+       |> assign(:editor_value, formatted_value)
+       |> LiveMonacoEditor.set_value(formatted_value, to: "draft_body")}
+    end
+    
+    # Auto-save event handlers
+    def handle_event("trigger_auto_save", _, socket) do
+      socket = perform_auto_save(socket)
+      {:noreply, socket}
+    end
+    
+    def handle_info(:auto_save, socket) do
+      socket = perform_auto_save(socket)
+      {:noreply, socket}
+    end
+    
+    # Helper functions
+    defp schedule_auto_save(socket) do
+      # Cancel existing timer if any
+      if socket.assigns.auto_save_timer do
+        Process.cancel_timer(socket.assigns.auto_save_timer)
+      end
+      
+      # Schedule auto-save in 3 seconds
+      if socket.assigns.auto_save_enabled do
+        timer = Process.send_after(self(), :auto_save, 3000)
+        assign(socket, :auto_save_timer, timer)
+      else
+        socket
+      end
+    end
+    
+    defp perform_auto_save(socket) do
+      if socket.assigns.draft_id do
+        # Update existing draft with auto-save
+        socket
+        |> assign(:save_status, :saving)
+        |> auto_save_draft()
+      else
+        # Create new draft with auto-save
+        socket
+        |> assign(:save_status, :saving)
+        |> create_draft_with_auto_save()
+      end
+    end
+    
+    defp auto_save_draft(socket) do
+      draft_params = get_draft_params(socket)
+      
+      case Admin.auto_save_draft(socket.assigns.draft_id, draft_params, socket.assigns.current_users.id) do
+        {:ok, _draft} ->
+          socket
+          |> assign(:save_status, :saved)
+          |> assign(:last_saved_at, DateTime.utc_now())
+          
+        {:error, _changeset} ->
+          assign(socket, :save_status, :error)
+      end
+    end
+    
+    defp create_draft_with_auto_save(socket) do
+      draft_params = get_draft_params(socket)
+      
+      case Admin.create_draft_with_auto_save(draft_params, socket.assigns.current_users.id) do
+        {:ok, draft} ->
+          socket
+          |> assign(:draft_id, draft.id)
+          |> assign(:save_status, :saved)
+          |> assign(:last_saved_at, DateTime.utc_now())
+          
+        {:error, _changeset} ->
+          assign(socket, :save_status, :error)
+      end
+    end
+    
+    defp get_draft_params(socket) do
+      form_data = socket.assigns.form.params
+      
+      # Set default publishedDate to current time if empty
+      published_date = case form_data["publishedDate"] do
+        nil -> DateTime.utc_now() |> DateTime.to_iso8601()
+        "" -> DateTime.utc_now() |> DateTime.to_iso8601()
+        date -> date
+      end
+      
+      %{
+        "title" => form_data["title"] || "",
+        "body" => socket.assigns.editor_value || "",
+        "slug" => form_data["slug"] || "",
+        "publishedDate" => published_date,
+        "meta_description" => form_data["meta_description"] || "",
+        "meta_keywords" => form_data["meta_keywords"] || "",
+        "og_title" => form_data["og_title"] || "",
+        "og_description" => form_data["og_description"] || "",
+        "og_image" => form_data["og_image"] || "",
+        "twitter_card_type" => form_data["twitter_card_type"] || "summary_large_image",
+        "canonical_url" => form_data["canonical_url"] || "",
+        "category_id" => form_data["category_id"],
+        "series_id" => form_data["series_id"],
+        "series_position" => form_data["series_position"],
+        "is_featured" => form_data["is_featured"] == "true"
+      }
+    end
+    
+    # Helper function to build hierarchical category options
+    defp build_category_options(categories, parent_id \\ nil, prefix \\ "") do
+      categories
+      |> Enum.filter(fn cat -> cat.parent_id == parent_id end)
+      |> Enum.flat_map(fn cat ->
+        option = {prefix <> cat.name, cat.id}
+        children = build_category_options(categories, cat.id, prefix <> "  ")
+        [option | children]
+      end)
+    end
+    
+    # Markdown formatting helpers
+    defp apply_inline_format(text, prefix, suffix) do
+      # For simplicity, we'll just append the format at the end
+      # In a real implementation, you'd insert at cursor position
+      text <> prefix <> "text" <> suffix
+    end
+    
+    defp apply_line_prefix(text, prefix) do
+      if String.ends_with?(text, "\n") || text == "" do
+        text <> prefix
+      else
+        text <> "\n" <> prefix
+      end
+    end
+    
+    defp apply_link_format(text) do
+      text <> "[link text](https://example.com)"
+    end
+    
+    defp apply_block_format(text, prefix, suffix) do
+      if String.ends_with?(text, "\n") || text == "" do
+        text <> prefix <> "\n" <> suffix
+      else
+        text <> "\n\n" <> prefix <> "\n" <> suffix
+      end
+    end
+    
+    defp apply_table_template(text) do
+      table = """
+      
+      | Header 1 | Header 2 | Header 3 |
+      |----------|----------|----------|
+      | Cell 1   | Cell 2   | Cell 3   |
+      | Cell 4   | Cell 5   | Cell 6   |
+      
+      """
+      
+      if String.ends_with?(text, "\n") || text == "" do
+        text <> table
+      else
+        text <> "\n" <> table
+      end
+    end
 end

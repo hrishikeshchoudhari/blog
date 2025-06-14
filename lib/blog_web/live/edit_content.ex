@@ -8,6 +8,7 @@ defmodule BlogWeb.EditContent do
   alias Blog.Admin.Draft
   alias Blog.Media
   import BlogWeb.Components.MediaPicker
+  import BlogWeb.Components.MarkdownToolbar
 
   def mount(%{"id" => id}, _session, socket) do
     type = case socket.assigns.live_action do
@@ -15,14 +16,12 @@ defmodule BlogWeb.EditContent do
       :edit_draft -> "draft"
     end
     
-    {content, page_title} = case type do
+    content = case type do
       "post" ->
-        post = Admin.get_post!(id)
-        {"Post", post}
+        Admin.get_post!(id)
         
       "draft" ->
-        draft = Admin.get_draft!(id)
-        {"Draft", draft}
+        Admin.get_draft!(id)
     end
     
     changeset = case type do
@@ -44,7 +43,7 @@ defmodule BlogWeb.EditContent do
     {:ok,
       assign(socket,
         active_admin_nav: if(type == "post", do: :posts, else: :dashboard),
-        page_title: "Edit #{page_title} - #{content.title}",
+        page_title: "Edit #{String.capitalize(type)} - #{content.title}",
         content: content,
         content_type: type,
         form: to_form(changeset),
@@ -57,7 +56,11 @@ defmodule BlogWeb.EditContent do
         show_media_picker: false,
         media_items: media_items,
         selected_media: nil,
-        media_size: "medium")
+        media_size: "medium",
+        auto_save_enabled: type == "draft",
+        auto_save_timer: nil,
+        last_saved_at: nil,
+        save_status: :idle)
     }
   end
 
@@ -66,8 +69,61 @@ defmodule BlogWeb.EditContent do
     <div class="max-w-6xl mx-auto" id="edit-content-container" phx-hook="MonacoUpdater">
       <!-- Page Header -->
       <div class="mb-6">
-        <h1 class="text-3xl font-bold text-neutral-850">Edit <%= String.capitalize(@content_type) %></h1>
-        <p class="mt-2 text-neutral-600">Update your <%= @content_type %>.</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-neutral-850">Edit <%= String.capitalize(@content_type) %></h1>
+            <p class="mt-2 text-neutral-600">Update your <%= @content_type %>.</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <!-- Auto-save Status -->
+            <%= if @content_type == "draft" do %>
+              <div class="text-sm">
+                <%= case @save_status do %>
+                  <% :saving -> %>
+                    <span class="text-amber-600 flex items-center gap-2">
+                      <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  <% :saved -> %>
+                    <span class="text-green-600 flex items-center gap-2">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Saved
+                      <%= if @last_saved_at do %>
+                        <span class="text-neutral-500">
+                          <%= Calendar.strftime(@last_saved_at, "%I:%M %p") %>
+                        </span>
+                      <% end %>
+                    </span>
+                  <% :error -> %>
+                    <span class="text-red-600">Auto-save failed</span>
+                  <% _ -> %>
+                    <%= if @auto_save_enabled do %>
+                      <span class="text-neutral-500">Auto-save enabled</span>
+                    <% else %>
+                      <span class="text-neutral-400">Auto-save disabled</span>
+                    <% end %>
+                <% end %>
+              </div>
+            <% end %>
+            
+            <%= if @content_type == "draft" do %>
+              <.link 
+                navigate={"/admin/draft/#{@content.id}/revisions"} 
+                class="inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-chiffon-100"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                View Version History
+              </.link>
+            <% end %>
+          </div>
+        </div>
       </div>
 
       <.form for={@form} phx-submit="update-content" phx-change="validate" class="space-y-6">
@@ -168,6 +224,9 @@ defmodule BlogWeb.EditContent do
             <% end %>
             
             <div class="border border-neutral-200 rounded-lg overflow-hidden">
+              <%= if !@editing_html do %>
+                <.markdown_toolbar />
+              <% end %>
               <LiveMonacoEditor.code_editor 
                 style="min-height: 500px" 
                 id="body" 
@@ -303,7 +362,12 @@ defmodule BlogWeb.EditContent do
   end
 
   def handle_event("set_editor_value", %{"value" => body}, socket) do
-    {:noreply, assign(socket, :editor_value, body)}
+    socket = 
+      socket
+      |> assign(:editor_value, body)
+      |> schedule_auto_save()
+    
+    {:noreply, socket}
   end
 
   def handle_event("validate", %{"post" => content_params}, socket) when socket.assigns.content_type == "post" do
@@ -476,10 +540,150 @@ defmodule BlogWeb.EditContent do
     end
   end
 
+  # Markdown toolbar event handler
+  def handle_event("format-text", %{"format" => format}, socket) do
+    # Get current editor value
+    current_value = socket.assigns.editor_value || ""
+    
+    # Apply formatting based on the format type
+    formatted_value = case format do
+      "bold" -> apply_inline_format(current_value, "**", "**")
+      "italic" -> apply_inline_format(current_value, "_", "_")
+      "strikethrough" -> apply_inline_format(current_value, "~", "~")
+      "code" -> apply_inline_format(current_value, "`", "`")
+      "heading" -> apply_line_prefix(current_value, "## ")
+      "link" -> apply_link_format(current_value)
+      "quote" -> apply_line_prefix(current_value, "> ")
+      "unordered-list" -> apply_line_prefix(current_value, "- ")
+      "ordered-list" -> apply_line_prefix(current_value, "1. ")
+      "hr" -> current_value <> "\n\n---\n\n"
+      "codeblock" -> apply_block_format(current_value, "```\n", "\n```")
+      "table" -> apply_table_template(current_value)
+      _ -> current_value
+    end
+    
+    # Update the editor with the formatted value
+    {:noreply,
+     socket
+     |> assign(:editor_value, formatted_value)
+     |> push_event("update-monaco-editor", %{value: formatted_value})}
+  end
+
   defp format_datetime_local(nil), do: ""
   defp format_datetime_local(datetime) do
     datetime
     |> DateTime.shift_zone!("Etc/UTC")
     |> Calendar.strftime("%Y-%m-%dT%H:%M")
+  end
+  
+  # Auto-save functionality
+  defp schedule_auto_save(socket) do
+    if socket.assigns.auto_save_enabled do
+      # Cancel existing timer if any
+      if socket.assigns.auto_save_timer do
+        Process.cancel_timer(socket.assigns.auto_save_timer)
+      end
+      
+      # Schedule auto-save in 3 seconds
+      timer = Process.send_after(self(), :auto_save, 3000)
+      assign(socket, :auto_save_timer, timer)
+    else
+      socket
+    end
+  end
+  
+  def handle_info(:auto_save, socket) do
+    socket = perform_auto_save(socket)
+    {:noreply, socket}
+  end
+  
+  defp perform_auto_save(socket) do
+    if socket.assigns.content_type == "draft" do
+      socket
+      |> assign(:save_status, :saving)
+      |> auto_save_draft()
+    else
+      socket
+    end
+  end
+  
+  defp auto_save_draft(socket) do
+    draft_params = get_draft_params(socket)
+    
+    case Admin.auto_save_draft(socket.assigns.content.id, draft_params, socket.assigns.current_users.id) do
+      {:ok, _draft} ->
+        socket
+        |> assign(:save_status, :saved)
+        |> assign(:last_saved_at, DateTime.utc_now())
+        
+      {:error, _changeset} ->
+        assign(socket, :save_status, :error)
+    end
+  end
+  
+  defp get_draft_params(socket) do
+    form_data = socket.assigns.form.params
+    
+    # Set default publishedDate if empty
+    published_date = case form_data["publishedDate"] do
+      nil -> 
+        socket.assigns.content.publishedDate || DateTime.utc_now()
+        |> format_datetime_local()
+      "" -> 
+        socket.assigns.content.publishedDate || DateTime.utc_now()
+        |> format_datetime_local()
+      date -> date
+    end
+    
+    %{
+      "title" => form_data["title"] || socket.assigns.content.title || "",
+      "body" => socket.assigns.editor_value || "",
+      "slug" => form_data["slug"] || socket.assigns.content.slug || "",
+      "publishedDate" => published_date
+    }
+  end
+  
+  # Markdown formatting helpers
+  defp apply_inline_format(text, prefix, suffix) do
+    # For simplicity, we'll just append the format at the end
+    # In a real implementation, you'd insert at cursor position
+    text <> prefix <> "text" <> suffix
+  end
+  
+  defp apply_line_prefix(text, prefix) do
+    if String.ends_with?(text, "\n") || text == "" do
+      text <> prefix
+    else
+      text <> "\n" <> prefix
+    end
+  end
+  
+  defp apply_link_format(text) do
+    text <> "[link text](https://example.com)"
+  end
+  
+  defp apply_block_format(text, prefix, suffix) do
+    if String.ends_with?(text, "\n") || text == "" do
+      text <> prefix <> "\n" <> suffix
+    else
+      text <> "\n\n" <> prefix <> "\n" <> suffix
+    end
+  end
+  
+  defp apply_table_template(text) do
+    table = """
+    
+    | Header 1 | Header 2 | Header 3 |
+    |----------|----------|----------|
+    | Cell 1   | Cell 2   | Cell 3   |
+    | Cell 4   | Cell 5   | Cell 6   |
+    
+    """
+    
+    if String.ends_with?(text, "\n") || text == "" do
+      text <> table
+    else
+      text <> "\n" <> table
+    end
   end
 end

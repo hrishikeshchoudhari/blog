@@ -64,7 +64,7 @@ stdout_logfile=/var/log/supervisor/postgresql.log
 stderr_logfile=/var/log/supervisor/postgresql_err.log
 
 [program:phoenix]
-command=/app/docker-entrypoint.sh
+command=/app/docker-entrypoint.sh phoenix
 directory=/app
 autostart=true
 autorestart=true

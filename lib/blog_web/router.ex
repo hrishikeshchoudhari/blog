@@ -22,19 +22,21 @@ defmodule BlogWeb.Router do
   #   pipe_through :api
   # ensure_authenticated
 
-  # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:blog, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
+  # Enable LiveDashboard for all environments with authentication
+  import Phoenix.LiveDashboard.Router
 
+  scope "/admin" do
+    pipe_through [:browser, :require_authenticated_users]
+    
+    live_dashboard "/dashboard", 
+      metrics: BlogWeb.Telemetry,
+      ecto_repos: [Blog.Repo]
+  end
+
+  # Enable Swoosh mailbox preview in development
+  if Application.compile_env(:blog, :dev_routes) do
     scope "/dev" do
       pipe_through :browser
-
-      live_dashboard "/dashboard", metrics: BlogWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
@@ -67,9 +69,12 @@ defmodule BlogWeb.Router do
       live "/admin/draft", WriteDraft
       live "/admin/post/:id/edit", EditContent, :edit_post, as: :edit_post
       live "/admin/draft/:id/edit", EditContent, :edit_draft, as: :edit_draft
+      live "/admin/draft/:draft_id/revisions", DraftRevisionsLive
       live "/admin/media", MediaLibraryLive
       live "/upload", UploadLive
       live "/admin/tags", TagsActions
+      live "/admin/categories", AdminCategories
+      live "/admin/series", AdminSeries
 
       live "/users/settings", UsersSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UsersSettingsLive, :confirm_email
@@ -99,6 +104,12 @@ defmodule BlogWeb.Router do
     live "/projects", Projects
     live "/readings", Readings
     live "/changelog", Changelog
+    live "/series", SeriesIndex
+    live "/series/:slug", SeriesShow
+    live "/category/:slug", CategoryShow
+    
+    # SEO routes
+    get "/sitemap.xml", SitemapController, :index
 
   end
 end
