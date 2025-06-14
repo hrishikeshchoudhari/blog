@@ -121,3 +121,6 @@ The project now uses Docker for consistent development:
 - Most Elixir code changes (contexts, schemas, etc.)
 
 Phoenix's hot-reloading handles most code changes automatically without needing to restart the container.
+
+## Git Guidelines
+- Do not insert Claude in the commit message as author

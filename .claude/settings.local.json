@@ -28,7 +28,8 @@
       "WebFetch(domain:hex.pm)",
       "Bash(mkdir:*)",
       "Bash(./backups/scripts/run_backup.sh:*)",
-      "Bash(./backups/scripts/setup_cron.sh:*)"
+      "Bash(./backups/scripts/setup_cron.sh:*)",
+      "Bash(./backups/scripts/enable_gdrive_sync.sh:*)"
     ],
     "deny": []
   }
