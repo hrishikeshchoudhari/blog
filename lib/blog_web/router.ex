@@ -110,6 +110,14 @@ defmodule BlogWeb.Router do
     
     # SEO routes
     get "/sitemap.xml", SitemapController, :index
+    
+    # Feed routes
+    get "/feed.xml", FeedController, :index
+    get "/rss.xml", FeedController, :rss
+    get "/feeds.opml", FeedController, :opml
+    get "/category/:slug/feed.xml", FeedController, :category
+    get "/series/:slug/feed.xml", FeedController, :series
+    get "/tag/:slug/feed.xml", FeedController, :tag
 
   end
 end

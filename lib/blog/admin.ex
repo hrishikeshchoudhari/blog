@@ -93,6 +93,10 @@ defmodule Blog.Admin do
   def list_tags() do
     Repo.all(Tag)
   end
+  
+  def get_tag_by_slug!(slug) do
+    Repo.get_by!(Tag, slug: slug)
+  end
 
   def nice_work() do
     #this is a nice way to write code

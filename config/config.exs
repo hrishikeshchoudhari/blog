@@ -61,6 +61,13 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# RSS/Atom Feed Configuration
+config :blog,
+  site_url: "http://localhost:4000",
+  feed_author: "Rishi Choudhari",
+  feed_email: "rishi@example.com",
+  feed_limit: 20
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

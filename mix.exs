@@ -58,7 +58,8 @@ defmodule Blog.MixProject do
       {:timex, "~> 3.7"},
       {:plug, "~> 1.17", override: true},
       {:tidewave, "~> 0.1", only: :dev},
-      {:xml_builder, "~> 2.2"}
+      {:xml_builder, "~> 2.2"},
+      {:atomex, "~> 0.5.0"}
     ]
   end
 

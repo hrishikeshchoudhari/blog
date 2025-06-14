@@ -16,7 +16,9 @@ defmodule BlogWeb.SeriesShow do
             current_series_data: series,  # Changed from series to current_series_data
             active_nav: :writing,
             page_title: series.title,
-            current_series: series
+            current_series: series,
+            feed_url: "/series/#{slug}/feed.xml",
+            feed_title: "#{series.title} - Blog Feed"
           )
         
         {:ok, socket}

@@ -19,7 +19,9 @@ defmodule BlogWeb.AllPostsForTag do
         tags: all_tags,  # Add this
         tag_slug: tag_slug,
         active_nav: :writing, 
-        page_title: page_title
+        page_title: page_title,
+        feed_url: "/tag/#{tag_slug}/feed.xml",
+        feed_title: if(tag, do: "Posts tagged '#{tag.name}' - Blog Feed", else: "Tag Feed")
       )}
     end
 

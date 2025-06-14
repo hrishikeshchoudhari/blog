@@ -17,7 +17,9 @@ defmodule BlogWeb.CategoryShow do
             active_nav: :writing,
             page_title: category.name,
             current_category: category,
-            breadcrumbs: build_breadcrumbs(category)
+            breadcrumbs: build_breadcrumbs(category),
+            feed_url: "/category/#{slug}/feed.xml",
+            feed_title: "#{category.name} - Blog Feed"
           )
         
         {:ok, socket}

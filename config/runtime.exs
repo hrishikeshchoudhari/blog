@@ -114,4 +114,11 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Hackney
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+  
+  # RSS/Atom Feed Configuration for production
+  config :blog,
+    site_url: "https://#{host}",
+    feed_author: System.get_env("FEED_AUTHOR") || "Blog Author",
+    feed_email: System.get_env("FEED_EMAIL") || "author@#{host}",
+    feed_limit: String.to_integer(System.get_env("FEED_LIMIT") || "20")
 end
