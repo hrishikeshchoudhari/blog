@@ -21,8 +21,12 @@ defmodule BlogWeb.AdminHome do
       total_projects = Map.get(posts_by_type, "project", 0)
       total_readings = Map.get(posts_by_type, "reading", 0)
       
-      # Get recent posts
-      recent_posts = Landing.all_posts() |> Enum.take(5)
+      # Get recent posts of ALL types (not just blog posts)
+      recent_posts = Blog.Post
+        |> preload([:tags, :category, :series])
+        |> order_by([p], desc: p.publishedDate)
+        |> limit(5)
+        |> Repo.all()
       
       # Get recent drafts
       recent_drafts = Admin.all_drafts() |> Enum.take(5)
@@ -120,16 +124,23 @@ defmodule BlogWeb.AdminHome do
               <% else %>
                 <ul class="space-y-4">
                   <%= for post <- @recent_posts do %>
-                    <li class="flex items-center justify-between">
-                      <div class="flex-1 min-w-0">
-                        <.link navigate={"/post/#{post.slug}"} class="text-neutral-850 hover:text-lava font-medium truncate block">
-                          <%= post.title %>
-                        </.link>
-                        <p class="text-sm text-neutral-500">
-                          <%= Calendar.strftime(post.publishedDate, "%B %d, %Y") %>
-                        </p>
-                      </div>
-                      <.link navigate={"/admin/post/#{post.id}/edit"} class="ml-4 text-neutral-400 hover:text-neutral-600">
+                    <li class="flex items-center justify-between group hover:bg-chiffon-50 p-2 rounded-lg transition-colors">
+                      <.link navigate={get_post_url(post)} class="flex-1 min-w-0">
+                        <div class="flex-1 min-w-0">
+                          <p class="text-neutral-850 hover:text-lava font-medium truncate block">
+                            <%= post.title %>
+                          </p>
+                          <div class="flex items-center gap-3 text-sm text-neutral-500">
+                            <span><%= Calendar.strftime(post.publishedDate, "%B %d, %Y") %></span>
+                            <%= if post.post_type && post.post_type != "post" do %>
+                              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-neutral-200 text-neutral-700">
+                                <%= String.capitalize(post.post_type) %>
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </.link>
+                      <.link navigate={"/admin/post/#{post.id}/edit"} class="ml-4 text-neutral-400 hover:text-neutral-600 opacity-0 group-hover:opacity-100 transition-opacity">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
@@ -157,22 +168,27 @@ defmodule BlogWeb.AdminHome do
               <% else %>
                 <ul class="space-y-4">
                   <%= for draft <- @recent_drafts do %>
-                    <li class="flex items-center justify-between">
-                      <div class="flex-1 min-w-0">
-                        <.link navigate={"/admin/draft/#{draft.id}/edit"} class="text-neutral-850 hover:text-lava font-medium truncate block">
-                          <%= draft.title || "Untitled Draft" %>
-                        </.link>
-                        <p class="text-sm text-neutral-500">
-                          Last modified <%= Calendar.strftime(draft.updated_at, "%B %d, %Y") %>
-                        </p>
-                      </div>
-                      <div class="ml-4 flex items-center space-x-2">
-                        <.link navigate={"/admin/draft/#{draft.id}/edit"} class="text-neutral-400 hover:text-neutral-600">
-                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </.link>
-                      </div>
+                    <li class="flex items-center justify-between group hover:bg-chiffon-50 p-2 rounded-lg transition-colors">
+                      <.link navigate={"/admin/draft/#{draft.id}/edit"} class="flex-1 min-w-0">
+                        <div class="flex-1 min-w-0">
+                          <p class="text-neutral-850 hover:text-lava font-medium truncate block">
+                            <%= draft.title || "Untitled Draft" %>
+                          </p>
+                          <div class="flex items-center gap-3 text-sm text-neutral-500">
+                            <span>Last modified <%= Calendar.strftime(draft.updated_at, "%B %d, %Y") %></span>
+                            <%= if draft.post_type && draft.post_type != "post" do %>
+                              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-neutral-200 text-neutral-700">
+                                <%= String.capitalize(draft.post_type) %>
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </.link>
+                      <.link navigate={"/admin/draft/#{draft.id}/edit"} class="ml-4 text-neutral-400 hover:text-neutral-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </.link>
                     </li>
                   <% end %>
                 </ul>
@@ -222,6 +238,14 @@ defmodule BlogWeb.AdminHome do
     def handle_event("view_draft", _unsigned_params, socket) do
       drafts = Admin.all_drafts()  # Fetch all drafts
       {:noreply, assign(socket, drafts: drafts)}
+    end
+    
+    defp get_post_url(post) do
+      case post.post_type do
+        "project" -> "/project/" <> post.slug
+        "reading" -> "/reading/" <> post.slug
+        _ -> "/post/" <> post.slug
+      end
     end
 
 end

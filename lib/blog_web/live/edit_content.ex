@@ -365,7 +365,114 @@ defmodule BlogWeb.EditContent do
             />
             <p class="mt-1 text-sm text-neutral-500">Select one or more tags for this <%= @content_type %></p>
           </div>
+          
+          <!-- Post Type -->
+          <div class="mt-6">
+            <label class="block text-sm font-medium text-neutral-700 mb-2">
+              Content Type
+            </label>
+            <div class="flex space-x-4">
+              <label class="inline-flex items-center">
+                <input type="radio" name="post_type" value="post" checked={@form[:post_type].value == "post" || @form[:post_type].value == nil} phx-change="validate" class="form-radio text-sacramento-600" />
+                <span class="ml-2">Blog Post</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" name="post_type" value="project" checked={@form[:post_type].value == "project"} phx-change="validate" class="form-radio text-sacramento-600" />
+                <span class="ml-2">Project</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" name="post_type" value="reading" checked={@form[:post_type].value == "reading"} phx-change="validate" class="form-radio text-sacramento-600" />
+                <span class="ml-2">Book Review</span>
+              </label>
+            </div>
+          </div>
         </div>
+        
+        <!-- Type-specific fields -->
+        <%= if @form[:post_type].value == "project" do %>
+          <div class="mt-6 p-4 bg-chiffon-50 rounded-lg border border-chiffon-200">
+            <h3 class="text-sm font-semibold text-neutral-850 mb-4">Project Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Demo URL</label>
+                <.input 
+                  field={@form[:demo_url]} 
+                  type="text" 
+                  placeholder="https://example.com/demo"
+                  class="w-full"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">GitHub URL</label>
+                <.input 
+                  field={@form[:github_url]} 
+                  type="text" 
+                  placeholder="https://github.com/user/repo"
+                  class="w-full"
+                />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Tech Stack</label>
+                <.input 
+                  field={@form[:tech_stack]} 
+                  type="text" 
+                  placeholder="Elixir, Phoenix, PostgreSQL"
+                  class="w-full"
+                />
+                <p class="mt-1 text-xs text-neutral-500">Enter technologies separated by commas</p>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        
+        <%= if @form[:post_type].value == "reading" do %>
+          <div class="mt-6 p-4 bg-chiffon-50 rounded-lg border border-chiffon-200">
+            <h3 class="text-sm font-semibold text-neutral-850 mb-4">Book Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Author</label>
+                <.input 
+                  field={@form[:author]} 
+                  type="text" 
+                  placeholder="Author name"
+                  class="w-full"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">ISBN</label>
+                <.input 
+                  field={@form[:isbn]} 
+                  type="text" 
+                  placeholder="978-3-16-148410-0"
+                  class="w-full"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Rating</label>
+                <.input 
+                  field={@form[:rating]} 
+                  type="select" 
+                  options={[
+                    {"⭐ 1 Star", "1"},
+                    {"⭐⭐ 2 Stars", "2"},
+                    {"⭐⭐⭐ 3 Stars", "3"},
+                    {"⭐⭐⭐⭐ 4 Stars", "4"},
+                    {"⭐⭐⭐⭐⭐ 5 Stars", "5"}
+                  ]}
+                  class="w-full"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Date Read</label>
+                <.input 
+                  field={@form[:date_read]} 
+                  type="date" 
+                  class="w-full"
+                />
+              </div>
+            </div>
+          </div>
+        <% end %>
 
         <!-- Action Buttons -->
         <div class="flex justify-between items-center">
@@ -422,8 +529,10 @@ defmodule BlogWeb.EditContent do
     {:noreply, socket}
   end
 
-  def handle_event("validate", %{"post" => content_params}, socket) when socket.assigns.content_type == "post" do
+  def handle_event("validate", params, socket) when socket.assigns.content_type == "post" do
+    content_params = Map.get(params, "post", %{})
     content_params = Map.put(content_params, "body", socket.assigns.editor_value || "")
+    content_params = Map.put(content_params, "post_type", Map.get(params, "post_type", socket.assigns.content.post_type || "post"))
     
     changeset =
       socket.assigns.content
@@ -433,8 +542,10 @@ defmodule BlogWeb.EditContent do
     {:noreply, assign(socket, form: to_form(changeset))}
   end
   
-  def handle_event("validate", %{"draft" => content_params}, socket) when socket.assigns.content_type == "draft" do
+  def handle_event("validate", params, socket) when socket.assigns.content_type == "draft" do
+    content_params = Map.get(params, "draft", %{})
     content_params = Map.put(content_params, "body", socket.assigns.editor_value || "")
+    content_params = Map.put(content_params, "post_type", Map.get(params, "post_type", socket.assigns.content.post_type || "post"))
     
     changeset =
       socket.assigns.content
@@ -474,7 +585,15 @@ defmodule BlogWeb.EditContent do
       "body" => Map.get(socket.assigns, :editor_value, ""),
       "slug" => Map.get(content_params, "slug", ""),
       "publishedDate" => Map.get(content_params, "publishedDate", ""),
-      "tag_ids" => tag_ids
+      "tag_ids" => tag_ids,
+      "post_type" => Map.get(params, "post_type", "post"),
+      "author" => Map.get(content_params, "author", ""),
+      "isbn" => Map.get(content_params, "isbn", ""),
+      "rating" => Map.get(content_params, "rating", ""),
+      "date_read" => Map.get(content_params, "date_read", ""),
+      "demo_url" => Map.get(content_params, "demo_url", ""),
+      "github_url" => Map.get(content_params, "github_url", ""),
+      "tech_stack" => Map.get(content_params, "tech_stack", "")
     }
 
     # First validate the changeset
@@ -522,7 +641,15 @@ defmodule BlogWeb.EditContent do
       "body" => draft.raw_body || draft.body,
       "slug" => draft.slug,
       "publishedDate" => draft.publishedDate || DateTime.utc_now(),
-      "tag_ids" => Enum.map(draft.tags, & &1.id)
+      "tag_ids" => Enum.map(draft.tags, & &1.id),
+      "post_type" => draft.post_type || "post",
+      "author" => draft.author,
+      "isbn" => draft.isbn,
+      "rating" => draft.rating,
+      "date_read" => draft.date_read,
+      "demo_url" => draft.demo_url,
+      "github_url" => draft.github_url,
+      "tech_stack" => draft.tech_stack
     }
     
     try do
