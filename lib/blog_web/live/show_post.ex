@@ -12,8 +12,15 @@ defmodule BlogWeb.ShowPost do
       %{"slug" => slug} = params
       post = Landing.get_post_by_slug(slug)
       
+      # Determine the URL prefix based on post type
+      url_prefix = case post.post_type do
+        "project" -> "/project/"
+        "reading" -> "/reading/"
+        _ -> "/post/"
+      end
+      
       # Generate canonical URL
-      canonical_url = post.canonical_url || BlogWeb.Endpoint.url() <> "/post/" <> post.slug
+      canonical_url = post.canonical_url || BlogWeb.Endpoint.url() <> url_prefix <> post.slug
       
       # Generate table of contents and process body
       toc_html = TocHelper.generate_toc(post.raw_body || "")
@@ -100,7 +107,7 @@ defmodule BlogWeb.ShowPost do
             <div class="flex justify-between items-center">
               <%= if @series_info.prev_post do %>
                 <.link 
-                  navigate={"/post/" <> @series_info.prev_post.slug} 
+                  navigate={get_post_url(@series_info.prev_post)} 
                   class="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +121,7 @@ defmodule BlogWeb.ShowPost do
               
               <%= if @series_info.next_post do %>
                 <.link 
-                  navigate={"/post/" <> @series_info.next_post.slug} 
+                  navigate={get_post_url(@series_info.next_post)} 
                   class="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
                 >
                   Next: <%= String.slice(@series_info.next_post.title, 0, 30) %><%= if String.length(@series_info.next_post.title) > 30, do: "..." %>
@@ -132,6 +139,81 @@ defmodule BlogWeb.ShowPost do
         <h1 class="text-neutral-850 text-4xl font-snpro mt-20 mb-5 tracking-tighter">
           <%= @post.title %>
         </h1>
+        
+        <!-- Project-specific header -->
+        <%= if @post.post_type == "project" do %>
+          <div class="mb-6 p-4 bg-sacramento-50 rounded-lg border border-sacramento-200">
+            <div class="flex flex-wrap gap-4">
+              <%= if @post.demo_url do %>
+                <a href={@post.demo_url} target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-sacramento-600 text-white rounded-md hover:bg-sacramento-700 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  View Demo
+                </a>
+              <% end %>
+              <%= if @post.github_url do %>
+                <a href={@post.github_url} target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                  </svg>
+                  View Source
+                </a>
+              <% end %>
+            </div>
+            <%= if @post.tech_stack && @post.tech_stack != [] do %>
+              <div class="mt-4">
+                <span class="text-sm font-medium text-sacramento-700">Tech Stack:</span>
+                <div class="flex gap-2 flex-wrap mt-2">
+                  <%= for tech <- @post.tech_stack do %>
+                    <span class="text-sm bg-white px-3 py-1 rounded-full border border-sacramento-300">
+                      <%= tech %>
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+        
+        <!-- Reading-specific header -->
+        <%= if @post.post_type == "reading" do %>
+          <div class="mb-6 p-4 bg-chiffon-50 rounded-lg border border-chiffon-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <%= if @post.author do %>
+                <div>
+                  <span class="text-sm font-medium text-gray-600">Author:</span>
+                  <p class="text-lg font-semibold"><%= @post.author %></p>
+                </div>
+              <% end %>
+              <%= if @post.rating do %>
+                <div>
+                  <span class="text-sm font-medium text-gray-600">My Rating:</span>
+                  <div class="flex items-center gap-1 mt-1">
+                    <%= for i <- 1..5 do %>
+                      <svg class={"w-5 h-5 #{if i <= @post.rating, do: "text-yellow-500 fill-current", else: "text-gray-300 fill-current"}"} viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                      </svg>
+                    <% end %>
+                    <span class="ml-2 text-sm text-gray-600">(<%= @post.rating %>/5)</span>
+                  </div>
+                </div>
+              <% end %>
+              <%= if @post.date_read do %>
+                <div>
+                  <span class="text-sm font-medium text-gray-600">Date Read:</span>
+                  <p class="text-lg"><%= Timex.format!(@post.date_read, "{Mfull} {YYYY}") %></p>
+                </div>
+              <% end %>
+              <%= if @post.isbn do %>
+                <div>
+                  <span class="text-sm font-medium text-gray-600">ISBN:</span>
+                  <p class="text-lg font-mono"><%= @post.isbn %></p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
         
         <div class="flex items-center gap-4 mb-5">
           <%= if @post.category do %>
@@ -160,7 +242,7 @@ defmodule BlogWeb.ShowPost do
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <%= if @series_info.prev_post do %>
                 <.link 
-                  navigate={"/post/" <> @series_info.prev_post.slug} 
+                  navigate={get_post_url(@series_info.prev_post)} 
                   class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
                 >
                   <svg class="w-8 h-8 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,7 +259,7 @@ defmodule BlogWeb.ShowPost do
               
               <%= if @series_info.next_post do %>
                 <.link 
-                  navigate={"/post/" <> @series_info.next_post.slug} 
+                  navigate={get_post_url(@series_info.next_post)} 
                   class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div class="text-left flex-1">
@@ -316,6 +398,14 @@ defmodule BlogWeb.ShowPost do
       # Rough estimate: 200 words per minute
       word_count = plain_text |> String.split() |> length()
       max(1, div(word_count, 200))
+    end
+    
+    defp get_post_url(post) do
+      case post.post_type do
+        "project" -> "/project/" <> post.slug
+        "reading" -> "/reading/" <> post.slug
+        _ -> "/post/" <> post.slug
+      end
     end
 
 end

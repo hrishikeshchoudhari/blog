@@ -1,15 +1,21 @@
 defmodule BlogWeb.AdminPosts do
   use BlogWeb, :admin_live_view
-  alias Blog.{Landing, Repo}
+  alias Blog.{Landing, Repo, Post}
   import Ecto.Query
 
   def mount(_params, _session, socket) do
-    posts = Landing.all_posts()
+    # Get all posts regardless of type
+    all_content = Post
+      |> preload([:tags, :category, :series])
+      |> order_by([p], desc: p.publishedDate)
+      |> Repo.all()
     
     {:ok, assign(socket,
       active_admin_nav: :posts,
-      page_title: "Manage Posts",
-      posts: posts
+      page_title: "Manage Content",
+      posts: all_content,
+      filtered_posts: all_content,
+      selected_type: "all"
     )}
   end
 
@@ -19,8 +25,8 @@ defmodule BlogWeb.AdminPosts do
       <!-- Page Header -->
       <div class="mb-8 flex justify-between items-center">
         <div>
-          <h1 class="text-3xl font-bold text-neutral-850">Posts</h1>
-          <p class="mt-2 text-neutral-600">Manage your published content</p>
+          <h1 class="text-3xl font-bold text-neutral-850">Published Content</h1>
+          <p class="mt-2 text-neutral-600">Manage all your published posts, projects, and readings</p>
         </div>
         <.link
           navigate="/admin/draft"
@@ -29,14 +35,58 @@ defmodule BlogWeb.AdminPosts do
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          New Post
+          New Content
         </.link>
+      </div>
+
+      <!-- Content Type Filter -->
+      <div class="mb-6 flex gap-2">
+        <button
+          phx-click="filter-type"
+          phx-value-type="all"
+          class={"px-4 py-2 rounded-md text-sm font-medium " <> 
+                 if(@selected_type == "all", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
+        >
+          All (<%= length(@posts) %>)
+        </button>
+        <button
+          phx-click="filter-type"
+          phx-value-type="post"
+          class={"px-4 py-2 rounded-md text-sm font-medium " <> 
+                 if(@selected_type == "post", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
+        >
+          Blog Posts (<%= Enum.count(@posts, & &1.post_type == "post") %>)
+        </button>
+        <button
+          phx-click="filter-type"
+          phx-value-type="project"
+          class={"px-4 py-2 rounded-md text-sm font-medium " <> 
+                 if(@selected_type == "project", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
+        >
+          Projects (<%= Enum.count(@posts, & &1.post_type == "project") %>)
+        </button>
+        <button
+          phx-click="filter-type"
+          phx-value-type="reading"
+          class={"px-4 py-2 rounded-md text-sm font-medium " <> 
+                 if(@selected_type == "reading", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
+        >
+          Readings (<%= Enum.count(@posts, & &1.post_type == "reading") %>)
+        </button>
       </div>
 
       <!-- Posts List -->
       <div class="bg-white rounded-lg shadow-sm border-2 border-chiffon-200">
         <div class="px-6 py-4 border-b border-chiffon-200">
-          <h2 class="text-lg font-semibold text-neutral-850">All Posts (<%= length(@posts) %>)</h2>
+          <h2 class="text-lg font-semibold text-neutral-850">
+            <%= case @selected_type do %>
+              <% "all" -> %>All Content
+              <% "post" -> %>Blog Posts
+              <% "project" -> %>Projects
+              <% "reading" -> %>Book Reviews
+            <% end %>
+            (<%= length(@filtered_posts) %>)
+          </h2>
         </div>
         <div class="overflow-hidden">
           <%= if @posts == [] do %>
@@ -47,6 +97,9 @@ defmodule BlogWeb.AdminPosts do
                 <tr>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     Title
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Type
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     Tags
@@ -60,15 +113,20 @@ defmodule BlogWeb.AdminPosts do
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-neutral-200">
-                <%= for post <- @posts do %>
+                <%= for post <- @filtered_posts do %>
                   <tr class="hover:bg-chiffon-50">
                     <td class="px-6 py-4">
                       <div>
-                        <.link navigate={"/post/#{post.slug}"} class="text-neutral-850 font-medium hover:text-lava">
+                        <.link navigate={get_post_url(post)} class="text-neutral-850 font-medium hover:text-lava">
                           <%= post.title %>
                         </.link>
                         <p class="text-sm text-neutral-500">/<%= post.slug %></p>
                       </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium " <> get_type_badge_class(post.post_type)}>
+                        <%= format_post_type(post.post_type) %>
+                      </span>
                     </td>
                     <td class="px-6 py-4">
                       <div class="flex flex-wrap gap-1">
@@ -84,7 +142,7 @@ defmodule BlogWeb.AdminPosts do
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex justify-end space-x-2">
-                        <.link navigate={"/post/#{post.slug}"} class="text-neutral-400 hover:text-neutral-600">
+                        <.link navigate={get_post_url(post)} class="text-neutral-400 hover:text-neutral-600">
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -112,4 +170,32 @@ defmodule BlogWeb.AdminPosts do
     </div>
     """
   end
+  
+  def handle_event("filter-type", %{"type" => type}, socket) do
+    filtered = if type == "all" do
+      socket.assigns.posts
+    else
+      Enum.filter(socket.assigns.posts, & &1.post_type == type)
+    end
+    
+    {:noreply, assign(socket, selected_type: type, filtered_posts: filtered)}
+  end
+  
+  defp get_post_url(post) do
+    case post.post_type do
+      "project" -> "/project/" <> post.slug
+      "reading" -> "/reading/" <> post.slug
+      _ -> "/post/" <> post.slug
+    end
+  end
+  
+  defp format_post_type("post"), do: "Blog Post"
+  defp format_post_type("project"), do: "Project"
+  defp format_post_type("reading"), do: "Reading"
+  defp format_post_type(_), do: "Unknown"
+  
+  defp get_type_badge_class("post"), do: "bg-blue-100 text-blue-800"
+  defp get_type_badge_class("project"), do: "bg-purple-100 text-purple-800"
+  defp get_type_badge_class("reading"), do: "bg-green-100 text-green-800"
+  defp get_type_badge_class(_), do: "bg-gray-100 text-gray-800"
 end

@@ -29,7 +29,8 @@
       "Bash(mkdir:*)",
       "Bash(./backups/scripts/run_backup.sh:*)",
       "Bash(./backups/scripts/setup_cron.sh:*)",
-      "Bash(./backups/scripts/enable_gdrive_sync.sh:*)"
+      "Bash(./backups/scripts/enable_gdrive_sync.sh:*)",
+      "Bash(echo $HOME)"
     ],
     "deny": []
   }

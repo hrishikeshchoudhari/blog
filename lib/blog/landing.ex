@@ -10,8 +10,25 @@ defmodule Blog.Landing do
 
   def all_posts() do
     Post
+    |> where([p], p.post_type == "post")
     |> preload([:tags, :category, :series])
     |> order_by([p], desc: p.publishedDate)
+    |> Repo.all()
+  end
+  
+  def all_projects() do
+    Post
+    |> where([p], p.post_type == "project")
+    |> preload([:tags, :category, :series])
+    |> order_by([p], desc: p.publishedDate)
+    |> Repo.all()
+  end
+  
+  def all_readings() do
+    Post
+    |> where([p], p.post_type == "reading")
+    |> preload([:tags, :category, :series])
+    |> order_by([p], desc: p.date_read)
     |> Repo.all()
   end
 
@@ -25,12 +42,18 @@ defmodule Blog.Landing do
     |> Repo.get_by(slug: slug)
   end
 
-  def get_posts_by_tag_slug(tag_slug) do
+  def get_posts_by_tag_slug(tag_slug, post_type \\ nil) do
     tag = Repo.get_by(Tag, slug: tag_slug)
     
     if tag do
+      query = if post_type do
+        from(p in Post, where: p.post_type == ^post_type, order_by: [desc: p.publishedDate], preload: [:tags, :category, :series])
+      else
+        from(p in Post, order_by: [desc: p.publishedDate], preload: [:tags, :category, :series])
+      end
+      
       tag
-      |> Repo.preload(posts: from(p in Post, order_by: [desc: p.publishedDate], preload: [:tags, :category, :series]))
+      |> Repo.preload(posts: query)
       |> Map.get(:posts, [])
     else
       []
@@ -59,9 +82,9 @@ defmodule Blog.Landing do
     Repo.all(Page)
   end
   
-  def featured_posts(limit \\ 3) do
+  def featured_posts(limit \\ 3, post_type \\ "post") do
     Post
-    |> where([p], p.is_featured == true)
+    |> where([p], p.is_featured == true and p.post_type == ^post_type)
     |> preload([:tags, :category, :series])
     |> order_by([p], desc: p.publishedDate)
     |> limit(^limit)

@@ -10,7 +10,7 @@ defmodule BlogWeb.WriteDraft do
     import BlogWeb.Components.MarkdownToolbar
 
     def mount(_params, _session, socket) do
-      changeset = Admin.Draft.changeset(%Draft{}, %{})
+      changeset = Admin.Draft.changeset(%Draft{}, %{post_type: "post"})
       tags = Admin.list_tags()
       tag_options = Enum.map(tags, fn tag -> {tag.name, tag.id} end)
       
@@ -48,7 +48,8 @@ defmodule BlogWeb.WriteDraft do
           last_saved_at: nil,
           save_status: :idle,
           show_preview: false,
-          preview_html: ""
+          preview_html: "",
+          post_type: "post"
         )
         |> push_event("init_auto_save", %{})
       }
@@ -112,6 +113,46 @@ defmodule BlogWeb.WriteDraft do
                   placeholder="Post title..." 
                   class="text-3xl font-bold border-0 focus:ring-0 p-0 w-full placeholder-neutral-400"
                 />
+              </div>
+
+              <!-- Post Type Section -->
+              <div class="p-6 border-b border-chiffon-200">
+                <label class="block text-sm font-medium text-neutral-700 mb-3">Content Type</label>
+                <div class="flex gap-6">
+                  <label class="flex items-center">
+                    <input 
+                      type="radio" 
+                      name="draft[post_type]" 
+                      value="post" 
+                      checked={@form[:post_type].value == "post" || @form[:post_type].value == nil}
+                      phx-change="validate"
+                      class="mr-2 text-sacramento-600 focus:ring-sacramento-500"
+                    />
+                    <span class="text-sm font-medium text-neutral-700">Blog Post</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input 
+                      type="radio" 
+                      name="draft[post_type]" 
+                      value="project" 
+                      checked={@form[:post_type].value == "project"}
+                      phx-change="validate"
+                      class="mr-2 text-sacramento-600 focus:ring-sacramento-500"
+                    />
+                    <span class="text-sm font-medium text-neutral-700">Project</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input 
+                      type="radio" 
+                      name="draft[post_type]" 
+                      value="reading" 
+                      checked={@form[:post_type].value == "reading"}
+                      phx-change="validate"
+                      class="mr-2 text-sacramento-600 focus:ring-sacramento-500"
+                    />
+                    <span class="text-sm font-medium text-neutral-700">Reading</span>
+                  </label>
+                </div>
               </div>
 
               <!-- Editor Section -->
@@ -352,6 +393,115 @@ defmodule BlogWeb.WriteDraft do
                 <p class="mt-1 text-sm text-neutral-500">Select one or more tags for this post</p>
               </div>
               
+              <!-- Type-specific fields -->
+              <%= if @form[:post_type].value == "reading" do %>
+                <div class="mt-6 p-4 bg-chiffon-50 rounded-lg border border-chiffon-200">
+                  <h3 class="text-sm font-semibold text-neutral-850 mb-4">Reading Details</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-700 mb-2">
+                        Author
+                      </label>
+                      <.input 
+                        id="author" 
+                        field={@form[:author]} 
+                        type="text" 
+                        placeholder="Book author"
+                        class="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-700 mb-2">
+                        ISBN
+                      </label>
+                      <.input 
+                        id="isbn" 
+                        field={@form[:isbn]} 
+                        type="text" 
+                        placeholder="ISBN-13 or ISBN-10"
+                        class="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-700 mb-2">
+                        Rating
+                      </label>
+                      <.input 
+                        id="rating" 
+                        field={@form[:rating]} 
+                        type="select" 
+                        options={[
+                          {"Select rating", nil},
+                          {"1 - Poor", 1},
+                          {"2 - Fair", 2},
+                          {"3 - Good", 3},
+                          {"4 - Very Good", 4},
+                          {"5 - Excellent", 5}
+                        ]}
+                        class="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-700 mb-2">
+                        Date Read
+                      </label>
+                      <.input 
+                        id="date_read" 
+                        field={@form[:date_read]} 
+                        type="date" 
+                        class="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+              
+              <%= if @form[:post_type].value == "project" do %>
+                <div class="mt-6 p-4 bg-chiffon-50 rounded-lg border border-chiffon-200">
+                  <h3 class="text-sm font-semibold text-neutral-850 mb-4">Project Details</h3>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-700 mb-2">
+                        Demo URL
+                      </label>
+                      <.input 
+                        id="demo_url" 
+                        field={@form[:demo_url]} 
+                        type="text" 
+                        placeholder="https://example.com/demo"
+                        class="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-700 mb-2">
+                        GitHub URL
+                      </label>
+                      <.input 
+                        id="github_url" 
+                        field={@form[:github_url]} 
+                        type="text" 
+                        placeholder="https://github.com/username/repo"
+                        class="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-700 mb-2">
+                        Tech Stack
+                      </label>
+                      <.input 
+                        id="tech_stack" 
+                        field={@form[:tech_stack]} 
+                        type="text" 
+                        placeholder="Elixir, Phoenix, PostgreSQL (comma-separated)"
+                        class="w-full"
+                        phx-debounce="300"
+                      />
+                      <p class="mt-1 text-sm text-neutral-500">Enter technologies separated by commas</p>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+              
               <!-- Featured Post -->
               <div class="mt-6">
                 <label class="flex items-center">
@@ -559,6 +709,8 @@ defmodule BlogWeb.WriteDraft do
       # Get the editor value from socket assigns
       draft_params = Map.put(draft_params, "body", socket.assigns.editor_value || "")
       
+      # For validation, we'll accept tech_stack as a string and not validate it
+      # The actual parsing will happen on save
       changeset =
         %Draft{}
         |> Admin.Draft.changeset(draft_params)
@@ -665,6 +817,7 @@ defmodule BlogWeb.WriteDraft do
         "body" => Map.get(socket.assigns, :editor_value, ""),
         "slug" => Map.get(draft_params, "slug", ""),
         "publishedDate" => Map.get(draft_params, "publishedDate", ""),
+        "post_type" => Map.get(draft_params, "post_type", "post"),
         "tag_ids" => tag_ids,
         # SEO fields
         "meta_description" => Map.get(draft_params, "meta_description", ""),
@@ -678,7 +831,16 @@ defmodule BlogWeb.WriteDraft do
         "category_id" => Map.get(draft_params, "category_id"),
         "series_id" => Map.get(draft_params, "series_id"),
         "series_position" => Map.get(draft_params, "series_position"),
-        "is_featured" => Map.get(draft_params, "is_featured", "false") == "true"
+        "is_featured" => Map.get(draft_params, "is_featured", "false") == "true",
+        # Reading-specific fields
+        "author" => Map.get(draft_params, "author"),
+        "isbn" => Map.get(draft_params, "isbn"),
+        "rating" => Map.get(draft_params, "rating"),
+        "date_read" => Map.get(draft_params, "date_read"),
+        # Project-specific fields
+        "demo_url" => Map.get(draft_params, "demo_url"),
+        "github_url" => Map.get(draft_params, "github_url"),
+        "tech_stack" => Map.get(draft_params, "tech_stack", "")
       }
 
       # First validate the changeset
@@ -822,6 +984,7 @@ defmodule BlogWeb.WriteDraft do
         "body" => socket.assigns.editor_value || "",
         "slug" => form_data["slug"] || "",
         "publishedDate" => published_date,
+        "post_type" => form_data["post_type"] || "post",
         "meta_description" => form_data["meta_description"] || "",
         "meta_keywords" => form_data["meta_keywords"] || "",
         "og_title" => form_data["og_title"] || "",

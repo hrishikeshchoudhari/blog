@@ -101,6 +101,8 @@ defmodule BlogWeb.Router do
     # live "/post/:slug", ShowPost
     live "/tag/:tagslug", AllPostsForTag
     live "/post/:slug", ShowPost
+    live "/project/:slug", ShowPost
+    live "/reading/:slug", ShowPost
     live "/projects", Projects
     live "/readings", Readings
     live "/changelog", Changelog

@@ -10,6 +10,17 @@ defmodule BlogWeb.AdminHome do
       total_drafts = Repo.aggregate(Blog.Admin.Draft, :count)
       total_tags = Repo.aggregate(Blog.Admin.Tag, :count)
       
+      # Get stats by post type
+      posts_by_type = Blog.Post
+        |> group_by([p], p.post_type)
+        |> select([p], {p.post_type, count(p.id)})
+        |> Repo.all()
+        |> Map.new()
+      
+      total_blog_posts = Map.get(posts_by_type, "post", 0)
+      total_projects = Map.get(posts_by_type, "project", 0)
+      total_readings = Map.get(posts_by_type, "reading", 0)
+      
       # Get recent posts
       recent_posts = Landing.all_posts() |> Enum.take(5)
       
@@ -22,6 +33,9 @@ defmodule BlogWeb.AdminHome do
         total_posts: total_posts,
         total_drafts: total_drafts,
         total_tags: total_tags,
+        total_blog_posts: total_blog_posts,
+        total_projects: total_projects,
+        total_readings: total_readings,
         recent_posts: recent_posts,
         recent_drafts: recent_drafts
       )}
@@ -46,8 +60,13 @@ defmodule BlogWeb.AdminHome do
                 </svg>
               </div>
               <div class="ml-5">
-                <p class="text-neutral-600 text-sm font-medium">Published Posts</p>
+                <p class="text-neutral-600 text-sm font-medium">Total Published</p>
                 <p class="text-2xl font-semibold text-neutral-850"><%= @total_posts %></p>
+                <div class="text-xs text-neutral-500 mt-1">
+                  <span>Posts: <%= @total_blog_posts %></span> • 
+                  <span>Projects: <%= @total_projects %></span> • 
+                  <span>Readings: <%= @total_readings %></span>
+                </div>
               </div>
             </div>
           </div>
@@ -127,7 +146,7 @@ defmodule BlogWeb.AdminHome do
             <div class="px-6 py-4 border-b border-chiffon-200">
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-neutral-850">Recent Drafts</h2>
-                <.link navigate="/admin/drafts" class="text-sm text-lava hover:text-orange-700">
+                <.link navigate="/admin" class="text-sm text-lava hover:text-orange-700">
                   View all →
                 </.link>
               </div>
