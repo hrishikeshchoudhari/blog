@@ -2,10 +2,12 @@ defmodule BlogWeb.Projects do
   use BlogWeb, :live_view
   alias Blog.Landing
   import BlogWeb.LiveHelpers
+  import BlogWeb.Components.Pagination
   use Timex
 
-  def mount(_params, _session, socket) do
-    projects = Landing.all_projects()
+  def mount(params, _session, socket) do
+    page = String.to_integer(params["page"] || "1")
+    paginated_data = Landing.list_projects(page, 12)
     
     {:ok, 
       socket
@@ -13,7 +15,25 @@ defmodule BlogWeb.Projects do
       |> assign(
         active_nav: :projects, 
         page_title: "Projects",
-        projects: projects
+        projects: paginated_data.projects,
+        page: paginated_data.page,
+        total_pages: paginated_data.total_pages,
+        total_projects: paginated_data.total_projects
+      )
+    }
+  end
+  
+  def handle_params(params, _uri, socket) do
+    page = String.to_integer(params["page"] || "1")
+    paginated_data = Landing.list_projects(page, 12)
+    
+    {:noreply, 
+      socket
+      |> assign(
+        projects: paginated_data.projects,
+        page: paginated_data.page,
+        total_pages: paginated_data.total_pages,
+        total_projects: paginated_data.total_projects
       )
     }
   end
@@ -82,13 +102,14 @@ defmodule BlogWeb.Projects do
         <% end %>
       </div>
       
-      <%= if @projects != [] do %>
-        <div class="text-center text-gray-500 mt-12">
-          <p class="text-sm">
-            Total Projects: <span class="font-semibold"><%= length(@projects) %></span>
-          </p>
-        </div>
-      <% end %>
+      <!-- Pagination Controls -->
+      <.pagination 
+        page={@page} 
+        total_pages={@total_pages} 
+        total_items={@total_projects} 
+        base_url="/projects" 
+        item_name="projects"
+      />
     </div>
     """
   end

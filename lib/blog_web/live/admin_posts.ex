@@ -1,22 +1,44 @@
 defmodule BlogWeb.AdminPosts do
   use BlogWeb, :admin_live_view
-  alias Blog.{Landing, Repo, Post}
+  alias Blog.{Admin, Landing, Repo, Post}
   import Ecto.Query
+  import BlogWeb.Components.Pagination
 
-  def mount(_params, _session, socket) do
-    # Get all posts regardless of type
-    all_content = Post
-      |> preload([:tags, :category, :series])
-      |> order_by([p], desc: p.publishedDate)
-      |> Repo.all()
+  def mount(params, _session, socket) do
+    page = String.to_integer(params["page"] || "1")
+    type_filter = params["type"] || "all"
+    
+    paginated_data = Admin.list_all_posts(page, 20, %{type: type_filter})
     
     {:ok, assign(socket,
       active_admin_nav: :posts,
       page_title: "Manage Content",
-      posts: all_content,
-      filtered_posts: all_content,
-      selected_type: "all"
+      posts: paginated_data.posts,
+      filtered_posts: paginated_data.posts,
+      selected_type: type_filter,
+      page: paginated_data.page,
+      total_pages: paginated_data.total_pages,
+      total_posts: paginated_data.total_posts
     )}
+  end
+  
+  def handle_params(params, _uri, socket) do
+    page = String.to_integer(params["page"] || "1")
+    type_filter = params["type"] || socket.assigns.selected_type || "all"
+    
+    paginated_data = Admin.list_all_posts(page, 20, %{type: type_filter})
+    
+    {:noreply, 
+      socket
+      |> assign(
+        posts: paginated_data.posts,
+        filtered_posts: paginated_data.posts,
+        selected_type: type_filter,
+        page: paginated_data.page,
+        total_pages: paginated_data.total_pages,
+        total_posts: paginated_data.total_posts
+      )
+    }
   end
 
   def render(assigns) do
@@ -47,7 +69,7 @@ defmodule BlogWeb.AdminPosts do
           class={"px-4 py-2 rounded-md text-sm font-medium " <> 
                  if(@selected_type == "all", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
         >
-          All (<%= length(@posts) %>)
+          All
         </button>
         <button
           phx-click="filter-type"
@@ -55,7 +77,7 @@ defmodule BlogWeb.AdminPosts do
           class={"px-4 py-2 rounded-md text-sm font-medium " <> 
                  if(@selected_type == "post", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
         >
-          Blog Posts (<%= Enum.count(@posts, & &1.post_type == "post") %>)
+          Blog Posts
         </button>
         <button
           phx-click="filter-type"
@@ -63,7 +85,7 @@ defmodule BlogWeb.AdminPosts do
           class={"px-4 py-2 rounded-md text-sm font-medium " <> 
                  if(@selected_type == "project", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
         >
-          Projects (<%= Enum.count(@posts, & &1.post_type == "project") %>)
+          Projects
         </button>
         <button
           phx-click="filter-type"
@@ -71,7 +93,7 @@ defmodule BlogWeb.AdminPosts do
           class={"px-4 py-2 rounded-md text-sm font-medium " <> 
                  if(@selected_type == "reading", do: "bg-sacramento-600 text-white", else: "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50")}
         >
-          Readings (<%= Enum.count(@posts, & &1.post_type == "reading") %>)
+          Readings
         </button>
       </div>
 
@@ -166,19 +188,29 @@ defmodule BlogWeb.AdminPosts do
             </table>
           <% end %>
         </div>
+        
+        <!-- Pagination Controls -->
+        <.pagination 
+          page={@page} 
+          total_pages={@total_pages} 
+          total_items={@total_posts} 
+          base_url={"/admin/posts" <> if(@selected_type != "all", do: "?type=#{@selected_type}", else: "")} 
+          item_name="items"
+        />
       </div>
     </div>
     """
   end
   
   def handle_event("filter-type", %{"type" => type}, socket) do
-    filtered = if type == "all" do
-      socket.assigns.posts
+    # Navigate to the new URL with the type filter
+    path = if type == "all" do
+      "/admin/posts"
     else
-      Enum.filter(socket.assigns.posts, & &1.post_type == type)
+      "/admin/posts?type=#{type}"
     end
     
-    {:noreply, assign(socket, selected_type: type, filtered_posts: filtered)}
+    {:noreply, push_patch(socket, to: path)}
   end
   
   defp get_post_url(post) do

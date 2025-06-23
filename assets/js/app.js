@@ -26,6 +26,51 @@ import { CodeEditorHook } from "../../deps/live_monaco_editor/priv/static/live_m
 let Hooks = {}
 Hooks.CodeEditorHook = CodeEditorHook
 
+// Scroll to top hook for pagination
+Hooks.ScrollToTop = {
+  mounted() {
+    // Store the current page number
+    this.page = this.el.dataset.page
+  },
+  
+  updated() {
+    // Check if page number changed
+    const newPage = this.el.dataset.page
+    if (newPage !== this.page) {
+      this.page = newPage
+      
+      // Instant scroll to top
+      window.scrollTo(0, 0)
+      
+      // Alternative: Smooth scroll
+      // window.scrollTo({
+      //   top: 0,
+      //   behavior: 'smooth'
+      // })
+    }
+  }
+}
+
+// Navigation scroll hook - scrolls to top on any navigation
+Hooks.NavScrollTop = {
+  mounted() {
+    this.handleClick = (e) => {
+      // Check if it's a LiveView navigation link
+      const link = e.target.closest('a[data-phx-link]')
+      if (link && (link.dataset.phxLink === 'patch' || link.dataset.phxLink === 'navigate')) {
+        // Small delay to ensure navigation starts before scroll
+        setTimeout(() => window.scrollTo(0, 0), 50)
+      }
+    }
+    
+    this.el.addEventListener('click', this.handleClick)
+  },
+  
+  destroyed() {
+    this.el.removeEventListener('click', this.handleClick)
+  }
+}
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {hooks: Hooks, params: {_csrf_token: csrfToken}})
 

@@ -2,13 +2,12 @@ defmodule BlogWeb.Readings do
   use BlogWeb, :live_view
   alias Blog.Landing
   import BlogWeb.LiveHelpers
+  import BlogWeb.Components.Pagination
   use Timex
 
-  def mount(_params, _session, socket) do
-    readings = Landing.all_readings()
-    
-    # Group readings by rating
-    readings_by_rating = Enum.group_by(readings, & &1.rating)
+  def mount(params, _session, socket) do
+    page = String.to_integer(params["page"] || "1")
+    paginated_data = Landing.list_readings(page, 20)
     
     {:ok, 
       socket
@@ -16,8 +15,27 @@ defmodule BlogWeb.Readings do
       |> assign(
         active_nav: :readings, 
         page_title: "Readings",
-        readings: readings,
-        readings_by_rating: readings_by_rating
+        readings: paginated_data.readings,
+        readings_by_rating: paginated_data.readings_by_rating,
+        page: paginated_data.page,
+        total_pages: paginated_data.total_pages,
+        total_readings: paginated_data.total_readings
+      )
+    }
+  end
+  
+  def handle_params(params, _uri, socket) do
+    page = String.to_integer(params["page"] || "1")
+    paginated_data = Landing.list_readings(page, 20)
+    
+    {:noreply, 
+      socket
+      |> assign(
+        readings: paginated_data.readings,
+        readings_by_rating: paginated_data.readings_by_rating,
+        page: paginated_data.page,
+        total_pages: paginated_data.total_pages,
+        total_readings: paginated_data.total_readings
       )
     }
   end
@@ -120,6 +138,15 @@ defmodule BlogWeb.Readings do
           </p>
         </div>
       <% end %>
+      
+      <!-- Pagination Controls -->
+      <.pagination 
+        page={@page} 
+        total_pages={@total_pages} 
+        total_items={@total_readings} 
+        base_url="/readings" 
+        item_name="books"
+      />
     </div>
     """
   end

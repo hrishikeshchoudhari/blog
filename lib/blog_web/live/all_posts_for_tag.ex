@@ -5,25 +5,47 @@ defmodule BlogWeb.AllPostsForTag do
     alias Blog.Landing
     alias Blog.Admin.Tag
     import BlogWeb.LiveHelpers
+    import BlogWeb.Components.Pagination
 
     def mount(params, _session, socket) do
       %{"tagslug" => tag_slug} = params
-      posts = Landing.get_posts_by_tag_slug(tag_slug)
-      tag = Blog.Repo.get_by(Tag, slug: tag_slug)
+      page = String.to_integer(params["page"] || "1")
       
-      page_title = if tag, do: "Posts tagged '#{tag.name}'", else: "Tag not found"
+      paginated_data = Landing.list_posts_by_tag_slug(tag_slug, page, 10)
+      
+      page_title = if paginated_data.tag, do: "Posts tagged '#{paginated_data.tag.name}'", else: "Tag not found"
       
       {:ok, 
         socket
         |> assign_sidebar_data()
         |> assign(
-          posts: posts, 
-          tag: tag,
+          posts: paginated_data.posts,
+          tag: paginated_data.tag,
           tag_slug: tag_slug,
+          page: paginated_data.page,
+          total_pages: paginated_data.total_pages,
+          total_posts: paginated_data.total_posts,
           active_nav: :writing, 
           page_title: page_title,
           feed_url: "/tag/#{tag_slug}/feed.xml",
-          feed_title: if(tag, do: "Posts tagged '#{tag.name}' - Blog Feed", else: "Tag Feed")
+          feed_title: if(paginated_data.tag, do: "Posts tagged '#{paginated_data.tag.name}' - Blog Feed", else: "Tag Feed")
+        )
+      }
+    end
+    
+    def handle_params(params, _uri, socket) do
+      %{"tagslug" => tag_slug} = params
+      page = String.to_integer(params["page"] || "1")
+      
+      paginated_data = Landing.list_posts_by_tag_slug(tag_slug, page, 10)
+      
+      {:noreply, 
+        socket
+        |> assign(
+          posts: paginated_data.posts,
+          page: paginated_data.page,
+          total_pages: paginated_data.total_pages,
+          total_posts: paginated_data.total_posts
         )
       }
     end
@@ -60,6 +82,14 @@ defmodule BlogWeb.AllPostsForTag do
               </li>
             <% end %>
             </ul>
+            
+            <!-- Pagination Controls -->
+            <.pagination 
+              page={@page} 
+              total_pages={@total_pages} 
+              total_items={@total_posts} 
+              base_url={"/tag/#{@tag_slug}"} 
+            />
           <% end %>
         <% else %>
           <h1 class="text-3xl font-bold mb-8">Tag not found</h1>

@@ -427,5 +427,38 @@ defmodule Blog.Admin do
       {:error, :unauthorized}
     end
   end
+  
+  def list_all_posts(page \\ 1, per_page \\ 20, filters \\ %{}) do
+    offset = (page - 1) * per_page
+    
+    query = 
+      Post
+      |> preload([:tags, :category, :series])
+      |> order_by([p], desc: p.publishedDate)
+    
+    # Apply type filter if provided
+    query = case Map.get(filters, :type) do
+      nil -> query
+      "all" -> query
+      type -> where(query, [p], p.post_type == ^type)
+    end
+    
+    posts = 
+      query
+      |> limit(^per_page)
+      |> offset(^offset)
+      |> Repo.all()
+      
+    total_posts = Repo.aggregate(query, :count, :id)
+    total_pages = ceil(total_posts / per_page)
+    
+    %{
+      posts: posts,
+      page: page,
+      per_page: per_page,
+      total_posts: total_posts,
+      total_pages: total_pages
+    }
+  end
 
 end

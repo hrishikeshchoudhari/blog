@@ -2,27 +2,52 @@ defmodule BlogWeb.SeriesShow do
   use BlogWeb, :live_view
   alias Blog.Landing
   import BlogWeb.LiveHelpers
+  import BlogWeb.Components.Pagination
   
-  def mount(%{"slug" => slug}, _session, socket) do
-    case Landing.get_series_by_slug(slug) do
-      nil ->
-        {:ok, push_navigate(socket, to: "/series")}
-        
-      series ->
-        socket =
-          socket
-          |> assign_sidebar_data()
-          |> assign(
-            current_series_data: series,  # Changed from series to current_series_data
-            active_nav: :writing,
-            page_title: series.title,
-            current_series: series,
-            feed_url: "/series/#{slug}/feed.xml",
-            feed_title: "#{series.title} - Blog Feed"
-          )
-        
-        {:ok, socket}
+  def mount(params, _session, socket) do
+    %{"slug" => slug} = params
+    page = String.to_integer(params["page"] || "1")
+    
+    paginated_data = Landing.list_posts_by_series_slug(slug, page, 10)
+    
+    if paginated_data.series do
+      socket =
+        socket
+        |> assign_sidebar_data()
+        |> assign(
+          current_series_data: paginated_data.series,
+          posts: paginated_data.posts,
+          page: paginated_data.page,
+          total_pages: paginated_data.total_pages,
+          total_posts: paginated_data.total_posts,
+          active_nav: :writing,
+          page_title: paginated_data.series.title,
+          current_series: paginated_data.series,
+          feed_url: "/series/#{slug}/feed.xml",
+          feed_title: "#{paginated_data.series.title} - Blog Feed"
+        )
+      
+      {:ok, socket}
+    else
+      {:ok, push_navigate(socket, to: "/series")}
     end
+  end
+  
+  def handle_params(params, _uri, socket) do
+    %{"slug" => slug} = params
+    page = String.to_integer(params["page"] || "1")
+    
+    paginated_data = Landing.list_posts_by_series_slug(slug, page, 10)
+    
+    {:noreply, 
+      socket
+      |> assign(
+        posts: paginated_data.posts,
+        page: paginated_data.page,
+        total_pages: paginated_data.total_pages,
+        total_posts: paginated_data.total_posts
+      )
+    }
   end
   
   def render(assigns) do
@@ -40,24 +65,24 @@ defmodule BlogWeb.SeriesShow do
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <%= length(@current_series_data.posts) %> posts in this series
+            <%= @total_posts %> posts in this series
           </span>
           <span class="flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <%= calculate_series_reading_time(@current_series_data.posts) %> min total reading time
+            ~<%= calculate_total_reading_time(@total_posts, 200) %> min total reading time
           </span>
         </div>
       </div>
       
       <!-- Series Posts -->
       <div class="space-y-8">
-        <%= for {post, index} <- Enum.with_index(@current_series_data.posts) do %>
+        <%= for {post, index} <- Enum.with_index(@posts) do %>
           <article class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 relative">
             <!-- Part Number Badge -->
             <div class="absolute -top-3 -left-3 bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold">
-              <%= index + 1 %>
+              <%= index + 1 + ((@page - 1) * 10) %>
             </div>
             
             <div class="ml-6">
@@ -98,6 +123,14 @@ defmodule BlogWeb.SeriesShow do
         <% end %>
       </div>
       
+      <!-- Pagination Controls -->
+      <.pagination 
+        page={@page} 
+        total_pages={@total_pages} 
+        total_items={@total_posts} 
+        base_url={"/series/#{@current_series_data.slug}"} 
+      />
+      
       <!-- Series Navigation -->
       <div class="mt-12 pt-8 border-t border-gray-200">
         <div class="flex justify-between items-center">
@@ -108,9 +141,9 @@ defmodule BlogWeb.SeriesShow do
             Back to all series
           </.link>
           
-          <%= if length(@current_series_data.posts) > 0 do %>
+          <%= if @total_posts > 0 && @page == 1 && length(@posts) > 0 do %>
             <.link 
-              navigate={"/post/" <> hd(@current_series_data.posts).slug} 
+              navigate={"/post/" <> hd(@posts).slug} 
               class="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium"
             >
               Start reading from Part 1
@@ -125,10 +158,10 @@ defmodule BlogWeb.SeriesShow do
     """
   end
   
-  defp calculate_series_reading_time(posts) do
-    posts
-    |> Enum.map(&estimate_reading_time(&1.body))
-    |> Enum.sum()
+  defp calculate_total_reading_time(total_posts, avg_words_per_post) do
+    # Rough estimate based on average post length
+    total_words = total_posts * avg_words_per_post
+    max(total_posts, div(total_words, 200))
   end
   
   defp estimate_reading_time(content) do

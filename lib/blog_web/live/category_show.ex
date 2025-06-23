@@ -2,28 +2,53 @@ defmodule BlogWeb.CategoryShow do
   use BlogWeb, :live_view
   alias Blog.Landing
   import BlogWeb.LiveHelpers
+  import BlogWeb.Components.Pagination
   
-  def mount(%{"slug" => slug}, _session, socket) do
-    case Landing.get_category_by_slug(slug) do
-      nil ->
-        {:ok, push_navigate(socket, to: "/")}
-        
-      category ->
-        socket =
-          socket
-          |> assign_sidebar_data()
-          |> assign(
-            category: category,
-            active_nav: :writing,
-            page_title: category.name,
-            current_category: category,
-            breadcrumbs: build_breadcrumbs(category),
-            feed_url: "/category/#{slug}/feed.xml",
-            feed_title: "#{category.name} - Blog Feed"
-          )
-        
-        {:ok, socket}
+  def mount(params, _session, socket) do
+    %{"slug" => slug} = params
+    page = String.to_integer(params["page"] || "1")
+    
+    paginated_data = Landing.list_posts_by_category_slug(slug, page, 10)
+    
+    if paginated_data.category do
+      socket =
+        socket
+        |> assign_sidebar_data()
+        |> assign(
+          category: paginated_data.category,
+          posts: paginated_data.posts,
+          page: paginated_data.page,
+          total_pages: paginated_data.total_pages,
+          total_posts: paginated_data.total_posts,
+          active_nav: :writing,
+          page_title: paginated_data.category.name,
+          current_category: paginated_data.category,
+          breadcrumbs: build_breadcrumbs(paginated_data.category),
+          feed_url: "/category/#{slug}/feed.xml",
+          feed_title: "#{paginated_data.category.name} - Blog Feed"
+        )
+      
+      {:ok, socket}
+    else
+      {:ok, push_navigate(socket, to: "/")}
     end
+  end
+  
+  def handle_params(params, _uri, socket) do
+    %{"slug" => slug} = params
+    page = String.to_integer(params["page"] || "1")
+    
+    paginated_data = Landing.list_posts_by_category_slug(slug, page, 10)
+    
+    {:noreply, 
+      socket
+      |> assign(
+        posts: paginated_data.posts,
+        page: paginated_data.page,
+        total_pages: paginated_data.total_pages,
+        total_posts: paginated_data.total_posts
+      )
+    }
   end
   
   def render(assigns) do
@@ -62,7 +87,7 @@ defmodule BlogWeb.CategoryShow do
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <%= length(@category.posts) %> posts
+            <%= @total_posts %> posts
           </span>
           
           <%= if @category.children != [] do %>
@@ -90,7 +115,7 @@ defmodule BlogWeb.CategoryShow do
                 <%= if child.description do %>
                   <p class="text-sm text-gray-600 line-clamp-2"><%= child.description %></p>
                 <% end %>
-                <p class="text-sm text-gray-500 mt-2"><%= length(child.posts) %> posts</p>
+                <p class="text-sm text-gray-500 mt-2">View posts →</p>
               </.link>
             <% end %>
           </div>
@@ -103,7 +128,7 @@ defmodule BlogWeb.CategoryShow do
           Posts in <%= @category.name %>
         </h2>
         
-        <%= if @category.posts == [] do %>
+        <%= if @posts == [] do %>
           <div class="text-center py-16">
             <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -113,7 +138,7 @@ defmodule BlogWeb.CategoryShow do
           </div>
         <% else %>
           <ul class="space-y-12">
-            <%= for post <- Enum.sort_by(@category.posts, & &1.publishedDate, {:desc, Date}) do %>
+            <%= for post <- @posts do %>
               <li>
                 <article>
                   <div class="flex items-center gap-3 mb-2">
@@ -156,6 +181,14 @@ defmodule BlogWeb.CategoryShow do
               </li>
             <% end %>
           </ul>
+          
+          <!-- Pagination Controls -->
+          <.pagination 
+            page={@page} 
+            total_pages={@total_pages} 
+            total_items={@total_posts} 
+            base_url={"/category/#{@category.slug}"} 
+          />
         <% end %>
       </div>
     </div>

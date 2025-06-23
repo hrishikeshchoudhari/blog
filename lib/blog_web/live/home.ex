@@ -3,10 +3,14 @@ defmodule BlogWeb.Home do
     require Logger
     alias Blog.Landing
     import BlogWeb.LiveHelpers
+    import BlogWeb.Components.Pagination
 
 
-    def mount(_params, _session, socket) do
-      posts = Landing.all_posts()
+    def mount(params, _session, socket) do
+      page = String.to_integer(params["page"] || "1")
+      per_page = 10
+      
+      paginated_posts = Landing.list_posts(page, per_page)
       featured_posts = Landing.featured_posts()
       popular_series = Landing.popular_series()
 
@@ -14,7 +18,10 @@ defmodule BlogWeb.Home do
         socket
         |> assign_sidebar_data()
         |> assign(
-          posts: posts, 
+          posts: paginated_posts.posts,
+          page: paginated_posts.page,
+          total_pages: paginated_posts.total_pages,
+          total_posts: paginated_posts.total_posts,
           featured_posts: featured_posts,
           popular_series: popular_series,
           active_nav: :writing, 
@@ -22,6 +29,23 @@ defmodule BlogWeb.Home do
         )
 
       {:ok, socket}
+    end
+    
+    def handle_params(params, _uri, socket) do
+      page = String.to_integer(params["page"] || "1")
+      per_page = 10
+      
+      paginated_posts = Landing.list_posts(page, per_page)
+      
+      {:noreply, 
+        socket
+        |> assign(
+          posts: paginated_posts.posts,
+          page: paginated_posts.page,
+          total_pages: paginated_posts.total_pages,
+          total_posts: paginated_posts.total_posts
+        )
+      }
     end
 
     def render(assigns) do
@@ -127,6 +151,14 @@ defmodule BlogWeb.Home do
           </li>
         <% end %>
         </ul>
+        
+        <!-- Pagination Controls -->
+        <.pagination 
+          page={@page} 
+          total_pages={@total_pages} 
+          total_items={@total_posts} 
+          base_url="/" 
+        />
       </div>
       """
     end

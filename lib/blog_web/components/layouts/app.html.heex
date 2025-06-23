@@ -1,7 +1,7 @@
 <div class="min-h-screen flex flex-col">
   <header class="fixed top-0 w-full z-10 sm:px-4 lg:px-8 bg-white/50 backdrop-blur-sm shadow-md">
     <div class="flex items-center justify-center py-3">
-      <nav class="flex flex-row grow items-center gap-1 lg:gap-16 md:gap-8 text-neutral-950 font-snpro md:font-medium md:max-w-4xl mt-1">
+      <nav class="flex flex-row grow items-center gap-1 lg:gap-16 md:gap-8 text-neutral-950 font-snpro md:font-medium md:max-w-4xl mt-1" phx-hook="NavScrollTop" id="header-nav">
         <.link patch="/" class="inline-block lg:pl-32 md:pl-16 sm:pl-2">
           <img src="/images/r-logo.png" width="50" alt="Rishi logo">
         </.link>
@@ -37,7 +37,7 @@
 
   <div class="flex flex-1 pt-16">    
     <!-- Improved Sidebar -->
-    <aside class="hidden lg:block lg:w-64 fixed left-0 top-0 h-screen pt-24 bg-gradient-to-b from-lava to-orange-700 text-chiffon-50 overflow-y-auto">
+    <aside class="hidden lg:block lg:w-64 fixed left-0 top-0 h-screen pt-24 bg-gradient-to-b from-lava to-orange-700 text-chiffon-50 overflow-y-auto" phx-hook="NavScrollTop" id="desktop-sidebar">
       <div class="py-4">
         <!-- Categories Section -->
         <details class="group mb-6" open>
@@ -161,7 +161,7 @@
     </aside>
 
     <!-- Improved Mobile sidebar -->
-    <aside class="lg:hidden fixed top-16 left-0 right-0 bg-gradient-to-r from-lava to-orange-700 text-chiffon-50 shadow-lg z-20 max-h-[calc(100vh-4rem)] overflow-y-auto">
+    <aside class="lg:hidden fixed top-16 left-0 right-0 bg-gradient-to-r from-lava to-orange-700 text-chiffon-50 shadow-lg z-20 max-h-[calc(100vh-4rem)] overflow-y-auto" phx-hook="NavScrollTop" id="mobile-sidebar">
       <!-- Categories Section -->
       <details class="group border-b border-orange-600/30">
         <summary class="px-4 py-3 cursor-pointer flex justify-between items-center hover:bg-orange-600/30">
