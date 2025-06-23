@@ -27,38 +27,76 @@ defmodule BlogWeb.Changelog do
         <!-- Latest Version -->
         <div class="border-l-4 border-green-500 pl-6">
           <div class="flex items-baseline gap-3 mb-2">
-            <h2 class="text-2xl font-bold">v3.1.0</h2>
+            <h2 class="text-2xl font-bold">v3.2.0</h2>
             <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">Latest</span>
             <span class="text-gray-500 text-sm"><%= Calendar.strftime(DateTime.utc_now(), "%B %d, %Y") %></span>
           </div>
           <ul class="space-y-2 text-gray-700">
             <li class="flex gap-2">
               <span class="text-green-500">✓</span>
-              <strong>Multi-Content-Type System:</strong> Support for blog posts, projects, and book reviews with type-specific fields
+              <strong>Pagination System:</strong> Implemented across all content pages with URL-based state for bookmarkable pages
             </li>
             <li class="flex gap-2">
               <span class="text-green-500">✓</span>
-              <strong>Project Showcase:</strong> Dedicated project pages with tech stack display, demo links, and GitHub integration
+              <strong>Scroll-to-Top Navigation:</strong> Automatic page top scrolling on pagination and navigation clicks for better UX
             </li>
             <li class="flex gap-2">
               <span class="text-green-500">✓</span>
-              <strong>Reading List:</strong> Book review system with ratings, author info, ISBN tracking, and date read
+              <strong>Reusable Pagination Component:</strong> Smart page range display with first/last/current page logic
             </li>
             <li class="flex gap-2">
               <span class="text-green-500">✓</span>
-              <strong>Dynamic Content Forms:</strong> Type-specific fields appear dynamically based on content type selection
+              <strong>Content-Specific Pagination:</strong> Maintained rating groups for readings, series order, and grid layouts
             </li>
             <li class="flex gap-2">
               <span class="text-green-500">✓</span>
-              <strong>Smart URL Routing:</strong> Automatic URL prefixes (/post/, /project/, /reading/) based on content type
+              <strong>Performance Optimization:</strong> Efficient query limits and offsets for faster page loads
             </li>
             <li class="flex gap-2">
               <span class="text-green-500">✓</span>
-              <strong>Enhanced Admin:</strong> Unified content management with type filtering and proper edit links
+              <strong>Mobile-Friendly Pagination:</strong> Responsive controls that work well on all screen sizes
             </li>
             <li class="flex gap-2">
               <span class="text-green-500">✓</span>
-              <strong>Type-Specific Templates:</strong> Custom display layouts for projects (with tech badges) and readings (with star ratings)
+              <strong>Admin Pagination:</strong> Added to admin posts list with content type filtering preserved
+            </li>
+          </ul>
+        </div>
+
+        <!-- Previous Version -->
+        <div class="border-l-4 border-gray-300 pl-6">
+          <div class="flex items-baseline gap-3 mb-2">
+            <h2 class="text-2xl font-bold">v3.1.0</h2>
+            <span class="text-gray-500 text-sm">June 22, 2025</span>
+          </div>
+          <ul class="space-y-2 text-gray-700">
+            <li class="flex gap-2">
+              <span class="text-gray-400">•</span>
+              Multi-Content-Type System: Support for blog posts, projects, and book reviews with type-specific fields
+            </li>
+            <li class="flex gap-2">
+              <span class="text-gray-400">•</span>
+              Project Showcase: Dedicated project pages with tech stack display, demo links, and GitHub integration
+            </li>
+            <li class="flex gap-2">
+              <span class="text-gray-400">•</span>
+              Reading List: Book review system with ratings, author info, ISBN tracking, and date read
+            </li>
+            <li class="flex gap-2">
+              <span class="text-gray-400">•</span>
+              Dynamic Content Forms: Type-specific fields appear dynamically based on content type selection
+            </li>
+            <li class="flex gap-2">
+              <span class="text-gray-400">•</span>
+              Smart URL Routing: Automatic URL prefixes (/post/, /project/, /reading/) based on content type
+            </li>
+            <li class="flex gap-2">
+              <span class="text-gray-400">•</span>
+              Enhanced Admin: Unified content management with type filtering and proper edit links
+            </li>
+            <li class="flex gap-2">
+              <span class="text-gray-400">•</span>
+              Type-Specific Templates: Custom display layouts for projects (with tech badges) and readings (with star ratings)
             </li>
           </ul>
         </div>
@@ -189,6 +227,10 @@ defmodule BlogWeb.Changelog do
         <h2 class="text-xl font-bold mb-3 text-gray-900">Recent Technical Improvements</h2>
         <div class="space-y-3 text-gray-700">
           <div>
+            <h3 class="font-semibold text-gray-800">📄 Pagination & Navigation</h3>
+            <p class="text-sm">URL-based pagination with Ecto query optimization using limit/offset. Reusable pagination component with smart page ranges. JavaScript hooks for scroll-to-top on navigation. LiveView lifecycle optimization with mount vs handle_params separation.</p>
+          </div>
+          <div>
             <h3 class="font-semibold text-gray-800">🎯 Multi-Content-Type Architecture</h3>
             <p class="text-sm">Polymorphic content system with post_type field enabling blog posts, projects, and readings. Type-specific fields stored in same table with smart validation based on content type. Automatic URL routing (/post/, /project/, /reading/) based on type.</p>
           </div>
@@ -221,6 +263,22 @@ defmodule BlogWeb.Changelog do
         <ul class="space-y-2 text-blue-800">
           <li class="flex gap-2">
             <span class="text-blue-500">→</span>
+            Search functionality with type filtering
+          </li>
+          <li class="flex gap-2">
+            <span class="text-blue-500">→</span>
+            Analytics dashboard with content type insights
+          </li>
+          <li class="flex gap-2">
+            <span class="text-blue-500">→</span>
+            Social sharing buttons for posts
+          </li>
+          <li class="flex gap-2">
+            <span class="text-blue-500">→</span>
+            Custom 404 and error pages
+          </li>
+          <li class="flex gap-2">
+            <span class="text-blue-500">→</span>
             Book API Integration (fetch book details from ISBN)
           </li>
           <li class="flex gap-2">
@@ -241,19 +299,11 @@ defmodule BlogWeb.Changelog do
           </li>
           <li class="flex gap-2">
             <span class="text-blue-500">→</span>
-            Search functionality with type filtering
-          </li>
-          <li class="flex gap-2">
-            <span class="text-blue-500">→</span>
             Comments system with AI moderation
           </li>
           <li class="flex gap-2">
             <span class="text-blue-500">→</span>
             Newsletter integration with content type preferences
-          </li>
-          <li class="flex gap-2">
-            <span class="text-blue-500">→</span>
-            Analytics dashboard with content type insights
           </li>
           <li class="flex gap-2">
             <span class="text-blue-500">→</span>
