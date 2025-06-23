@@ -43,9 +43,13 @@ priv/.DS_Store
 # Environment variables
 .env
 .env.local
+.env.production
 
 # Ignore local dev configuration
 /config/dev.local.exs
 
 # Ignore rclone config (contains Google credentials)
 /backups/rclone.conf
+
+# Ignore deployment artifacts
+blog.tar.gz

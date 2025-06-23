@@ -1,0 +1,49 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build production image
+      run: docker build -f Dockerfile.prod -t blog:latest .
+    
+    - name: Save Docker image
+      run: docker save blog:latest | gzip > blog.tar.gz
+    
+    - name: Copy files to server
+      uses: appleboy/scp-action@v0.1.5
+      with:
+        host: ${{ secrets.HETZNER_HOST }}
+        username: ${{ secrets.HETZNER_USER }}
+        key: ${{ secrets.HETZNER_SSH_KEY }}
+        source: "blog.tar.gz,docker-compose.prod.yml"
+        target: "/tmp/"
+    
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.HETZNER_HOST }}
+        username: ${{ secrets.HETZNER_USER }}
+        key: ${{ secrets.HETZNER_SSH_KEY }}
+        script: |
+          cd /opt/blog
+          docker load < /tmp/blog.tar.gz
+          rm /tmp/blog.tar.gz
+          cp /tmp/docker-compose.prod.yml docker-compose.yml
+          rm /tmp/docker-compose.prod.yml
+          docker-compose down || true
+          docker-compose up -d
+          docker-compose ps
+          echo "Deployment complete!"

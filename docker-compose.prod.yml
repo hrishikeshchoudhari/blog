@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-blog}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-blog_prod}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - blog_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-blog}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  blog:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-blog}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-blog_prod}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      PHX_HOST: ${PHX_HOST}
+      PORT: 4000
+      POOL_SIZE: 10
+      # Email configuration
+      POSTMARK_API_KEY: ${POSTMARK_API_KEY}
+      # Google Drive backup configuration (optional)
+      GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID:-}
+      GOOGLE_SERVICE_ACCOUNT_KEY: ${GOOGLE_SERVICE_ACCOUNT_KEY:-}
+      # Registration control
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-true}
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - uploads:/app/uploads
+      - ./backups:/app/backups
+    networks:
+      - blog_network
+    command: >
+      sh -c "
+        bin/blog eval 'Blog.Release.migrate()' &&
+        bin/blog start
+      "
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads:
+    driver: local
+
+networks:
+  blog_network:
+    driver: bridge

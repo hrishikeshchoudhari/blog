@@ -1,0 +1,42 @@
+your.domain.com {
+    # Enable compression
+    encode gzip
+
+    # Reverse proxy to Phoenix app
+    reverse_proxy localhost:4000 {
+        # WebSocket support for LiveView
+        header_up Upgrade {http.request.header.Upgrade}
+        header_up Connection {http.request.header.Connection}
+    }
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Serve uploads directly (optional, for better performance)
+    handle_path /uploads/* {
+        root * /opt/blog/uploads
+        file_server
+    }
+
+    # Cache static assets
+    @static {
+        path /js/* /css/* /images/* /fonts/*
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # Logging
+    log {
+        output file /var/log/caddy/blog_access.log
+        format console
+    }
+}
+
+# Redirect www to non-www (optional)
+www.your.domain.com {
+    redir https://your.domain.com{uri} permanent
+}
